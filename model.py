@@ -71,20 +71,35 @@ class PartSource(object):
     def price(self):
         return self.prices.order_by(Desc(Price.time)).order_by(Price.amount).all()
 
-class PartType(Describable, Taggable):
+class PartType(Storm):
     """Model for one part type"""
     __storm_table__ = "types"
+
+    id = Int(primary=True)
+    name = Unicode(default=u"test")
+    summary = Unicode(default=u"pokus")
+    description = Unicode()
+
 
     pins = Int()
     footprint_id = Int()
     footprint = Reference(footprint_id, Footprint.id)
     sources = ReferenceSet(id, PartSource.part_type_id)
+    parts = ReferenceSet(id, "Part.part_type_id")
     datasheet = Unicode()
 
     @property
     def price(self):
         """find the lowest price"""
         return 0.0
+
+    @property
+    def count(self):
+        """get the count of all components with this type"""
+        if not Store.of(self):
+            return 0
+        
+        return Store.of(self).find(Part, Part.part_type_id == self.id).sum(Part.count)
 
 class Location(Describable):
     """Model for locations"""
