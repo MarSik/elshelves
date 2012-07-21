@@ -1,25 +1,23 @@
 from storm.locals import create_database, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float
 
 
-class Describable(Storm):
-    """Base class for everything having id, name and description"""
+class Tag(Storm):
+    """Model for tags"""
+    __storm_table__ = "tags"
+
     id = Int(primary=True)
     name = Unicode()
     summary = Unicode()
     description = Unicode()
 
-class Tag(Describable):
-    """Model for tags"""
-    __storm_table__ = "tags"
-
-class Taggable(Storm):
-    """Base class for everything which can be assigned tags"""
-    #tags =
-    pass
-
-class Footprint(Describable):
+class Footprint(Storm):
     """Model for one footprint"""
     __storm_table__ = "footprints"
+
+    id = Int(primary=True)
+    name = Unicode()
+    summary = Unicode()
+    description = Unicode()
     
     smd = Bool()
     pins = Int()
@@ -37,9 +35,14 @@ class Price(Storm):
     vat_included = Bool()
     currency = Unicode()
 
-class Source(Describable):
+class Source(Storm):
     """Model for one source/vendor of parts"""
     __storm_table__ = "sources"
+
+    id = Int(primary=True)
+    name = Unicode()
+    summary = Unicode()
+    description = Unicode()
 
     home = Unicode() # homepage
     url = Unicode() # formatting string with %s to be replaced by part id to get direct url
@@ -101,9 +104,15 @@ class PartType(Storm):
         
         return Store.of(self).find(Part, Part.part_type_id == self.id).sum(Part.count)
 
-class Location(Describable):
+class Location(Storm):
     """Model for locations"""
     __storm_table__ = "locations"
+
+    id = Int(primary=True)
+    name = Unicode(default=u"test")
+    summary = Unicode(default=u"pokus")
+    description = Unicode()
+
 
 class History(Storm):
     """Model for historical records"""
@@ -118,8 +127,6 @@ class History(Storm):
 
 class WithHistory(Storm):
     """Base class for evyrything with trackabe history"""
-    history_log = Int()
-    history = ReferenceSet(history_log, History.log)
 
     @property
     def location(self):
@@ -143,10 +150,17 @@ class Part(WithHistory):
     part_type = Reference(part_type_id, PartType.id)
     item_id = Int()
     item = Reference(item_id, "Item.id")
+    history_log = Int()
+    history = ReferenceSet(history_log, History.log)
 
-class Project(Describable):
+class Project(Storm):
     """Model for project"""
     __storm_table__ = "projects"
+
+    id = Int(primary=True)
+    name = Unicode(default=u"test")
+    summary = Unicode(default=u"pokus")
+    description = Unicode()
 
 class Item(WithHistory):
     """Model for actual built items"""
@@ -159,7 +173,8 @@ class Item(WithHistory):
     serial = Unicode()
     project_id = Int()
     project = Reference(project_id, Project.id)
-
+    history_log = Int()
+    history = ReferenceSet(history_log, History.log)
     
 def getStore(url):
     d = create_database(url)
