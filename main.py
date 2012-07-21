@@ -9,20 +9,6 @@ import urwid.raw_display
 import urwid.web_display
 import model
 
-palette = [
-    ('body','black','light gray', 'standout'),
-    ('reverse','light gray','black'),
-    ('header','white','dark red', 'bold'),
-    ('important','dark blue','light gray',('standout','underline')),
-    ('editfc','white', 'dark blue', 'bold'),
-    ('editbx','light gray', 'dark blue'),
-    ('editcp','black','light gray', 'standout'),
-    ('bright','dark gray','light gray', ('bold','standout')),
-    ('buttn','black','dark cyan'),
-    ('buttnf','white','dark blue','bold'),
-    ]
-
-screen = None
 
 
 def e(w):
@@ -70,92 +56,138 @@ def part_widget(t):
 
     return pile
 
-class UIScreen(object):
-    def __init__(self, store, frame, header, footer):
-        self._store = store
-        self._frame = frame
-        self._header = header
-        self._footer = footer
-        self._result = None
+class App(object):
+    palette = [
+        ('body','black','light gray', 'standout'),
+        ('reverse','light gray','black'),
+        ('header','white','dark red', 'bold'),
+        ('important','dark blue','light gray',('standout','underline')),
+        ('editfc','white', 'dark blue', 'bold'),
+        ('editbx','light gray', 'dark blue'),
+        ('editcp','black','light gray', 'standout'),
+        ('bright','dark gray','light gray', ('bold','standout')),
+        ('buttn','black','dark cyan'),
+        ('buttnf','white','dark blue','bold'),
+        ]
 
-    def run(self):
-        self._result = None
+    screen = None
 
-        body = self.show()
+    def __init__(self, title):
+        self._setup(title)
+
+        self._header = urwid.AttrWrap(urwid.Text(title), 'header')
+        self._frame = urwid.Frame(None, header=self.header)
+        
+        self._footer = None
+        self._screens = []
+
+    def switch_screen(self, ui, args = None):
+        self._screens.pop()
+        self._screens.append((ui, args))
+        self.redraw()
+
+    def switch_screen_with_return(self, ui, args = None):
+        self._screens.append((ui, args))
+        self.redraw()
+
+    def close_screen(self, scr = None):
+        oldscr, oldattr = self._screens.pop()
+        if scr:
+            assert oldscr == scr
+            
+        if self._screens:
+            self.redraw()
+        else:
+            raise urwid.ExitMainLoop()
+
+    def redraw(self):
+        screen, args = self._screens[-1]
+        body = screen.show(args)
         self._frame.set_body(body)
 
-        urwid.MainLoop(self._frame, palette, screen,
-                           unhandled_input=self.input).run()
+    def run(self):
+        urwid.MainLoop(self._frame, self.palette, self.screen,
+                       unhandled_input=self.input).run()
 
-    def show(self):
+    def _setup(self, title):
+        urwid.web_display.set_preferences(title)
+        # try to handle short web requests quickly
+        if urwid.web_display.handle_short_request():
+            return
+        
+        # use appropriate Screen class
+        if urwid.web_display.is_web_request():
+            screen = urwid.web_display.Screen()
+        else:
+            screen = urwid.raw_display.Screen()
+
+    def input(self, key):
+        """Method called to process unhandled input key presses."""
+        key = self._screens[-1][0].input(key)
+        if key == 'esc':
+            self.close_screen()
+
+    @property
+    def header(self):
+        return self._header
+
+    @property
+    def store(self):
+        return self._store
+
+    
+class UIScreen(object):
+    def __init__(self, app, store):
+        self._app = app
+        self._store = store
+
+    def show(self, args = None):
         """Method which is called before the screen is displayed. Is has to return the top level widget containing the contents."""
         pass
 
     def input(self, key):
         """Method called to process unhandled input key presses."""
         pass
-
-    def close(self):
-        """Exit this screen."""
-        raise urwid.ExitMainLoop()
-
-    @property
-    def result(self):
-        return self._result
-
-    @result.setter
-    def result(self, r):
-        self._result = r
-
+    
     @property
     def store(self):
         return self._store
+
+    @property
+    def app(self):
+        return self._app
+
+    def close(self):
+        self.app.close_screen(self)
     
 class SourceSelector(UIScreen):
-    def show(self):
+    def __init__(self, app, store):
+        UIScreen.__init__(self, app, store)
+        
         listbox_content = [part_widget(p) for p in self.store.find(model.PartType)]
-
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
-        return urwid.AttrWrap(listbox, 'body')
+        self.body = urwid.AttrWrap(listbox, 'body')
         
+    def show(self, args = None):
+        return self.body
+    
     def input(self, key):
         if key == 'esc':
-            self.result = self.walker.get_focus()
             self.close()
         elif key == "tab":
-            walker.append(part_widget(model.PartType()))
+            self.walker.append(part_widget(model.PartType()))
         elif key == 'enter':
-            self._store.commit()
+            self.store.commit()
 
 def main():
     store = model.getStore("sqlite:shelves.sqlite3")
-
     text_header = "Shelves 0.0.0"
-    header = urwid.AttrWrap(urwid.Text(text_header), 'header')
-    full_screen = urwid.Frame(None, header=header)
+    app = App(text_header)
 
-    source_screen = SourceSelector(store = store,
-                                   frame = full_screen,
-                                   header = header,
-                                   footer = None)
-    source_screen.run()
-
-def setup():
-    global screen
-
-    urwid.web_display.set_preferences("Shelves 0.0.0")
-    # try to handle short web requests quickly
-    if urwid.web_display.handle_short_request():
-        return
-
-    # use appropriate Screen class
-    if urwid.web_display.is_web_request():
-        screen = urwid.web_display.Screen()
-    else:
-        screen = urwid.raw_display.Screen()
-
-    main()
+    source_screen = SourceSelector(app, store)
+    app.switch_screen_with_return(source_screen)
+    app.run()
 
 if '__main__'==__name__ or urwid.web_display.is_web_request():
-    setup()
+    main()
