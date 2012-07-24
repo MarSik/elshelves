@@ -1,3 +1,10 @@
+CREATE TABLE assignments (
+       id integer PRIMARY KEY,
+       part_type_id integer,
+       item_it integer,
+       count integer
+);
+
 CREATE TABLE items (
        id integer PRIMARY KEY,
        kit boolean default false,
@@ -21,8 +28,9 @@ CREATE TABLE parts (
        date datetime,
        price float,
        part_type_id integer,
-       item_id integer,
-       history_log integer
+       assignment_id integer,
+       history_log integer,
+       manufacturer varchar
 );
 
 CREATE TABLE history (

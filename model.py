@@ -18,7 +18,7 @@ class Footprint(Storm):
     name = Unicode()
     summary = Unicode()
     description = Unicode()
-    
+
     smd = Bool()
     pins = Int()
     kicad = Unicode() # formatting string using %d to be replaced by the number of pins from part
@@ -48,6 +48,13 @@ class Source(Storm):
     url = Unicode() # formatting string with %s to be replaced by part id to get direct url
     prices = Unicode() # reference to somethign which will be able to retrieve prices
     customs = Bool() # is the shipment going through customs? (VAT?)
+
+    def __init__(self, name, summary, description, home, url):
+        self.name = name
+        self.summary = summary
+        self.description = description
+        self.home = home
+        self.url = url
 
 class PartSource(object):
     """Model for many to many relationship between Source and PartType"""
@@ -101,7 +108,7 @@ class PartType(Storm):
         """get the count of all components with this type"""
         if not Store.of(self):
             return 0
-        
+
         return Store.of(self).find(Part, Part.part_type_id == self.id).sum(Part.count)
 
 class Location(Storm):
@@ -148,8 +155,9 @@ class Part(WithHistory):
     price = Float()
     part_type_id = Int()
     part_type = Reference(part_type_id, PartType.id)
-    item_id = Int()
-    item = Reference(item_id, "Item.id")
+    manufacturer = Unicode()
+    assignment_id = Int()
+    assignment = Reference(assignment_id, "Assignment.id")
     history_log = Int()
     history = ReferenceSet(history_log, History.log)
 
@@ -169,17 +177,28 @@ class Item(WithHistory):
     id = Int(primary=True)
     kit = Bool() # was this put together as a kit or assembled version?
     description = Unicode()
-    parts = ReferenceSet(id, Part.item_id)
+    assignments = ReferenceSet(id, "Assignment.item_id")
     serial = Unicode()
     project_id = Int()
     project = Reference(project_id, Project.id)
     history_log = Int()
     history = ReferenceSet(history_log, History.log)
-    
+
+class Assignment(Storm):
+    """Model for many to many relationship between Source and PartType"""
+    __storm_table__ = "assignments"
+
+    id = Int(primary=True)
+    part_type_id = Int()
+    parts = ReferenceSet(id, Part.assignment_id)
+    item_id = Int()
+    item = Reference(item_id, Item.id)
+    count = Int()
+
 def getStore(url):
     d = create_database(url)
     s = Store(d)
     if url.startswith("sqlite:"):
         s.execute("PRAGMA foreign_keys = ON;")
-        
+
     return s
