@@ -98,14 +98,13 @@ class PartEditor(app.UIScreen):
                     # unknown part create part type and all dependencies
                     
                     # get or create footprint
-                    try:
-                        footprint = self.store.find(model.Footprint, name = part.footprint).one()
-                    except model.NotOneError:
+                    footprint = self.store.find(model.Footprint, name = part.footprint).one()
+                    if footprint is None:
                         footprint = model.Footprint()
                         footprint.name = part.footprint
                         footprint.pins = part.pins
                         self.store.add(footprint)
-                        
+
                     # part_type
                     new_part_type = model.PartType()
                     new_part_type.footprint = footprint
@@ -124,7 +123,7 @@ class PartEditor(app.UIScreen):
                 # known part, just add new amount of it
                 if int(part.count) > 0:
                     new_part = model.Part()
-                    new_part.part_type_id = part.part_type_id
+                    new_part.part_type = part.part_type
                     new_part.count = int(part.count)
                     new_part.date = part.date
                     new_part.price = float(part.unitprice)
@@ -141,7 +140,7 @@ class PartEditor(app.UIScreen):
                 if not sources and part.sku:
                     # source/sku record
                     source = model.PartSource()
-                    source.part_type_id = part.part_type_id
+                    source.part_type = part.part_type
                     source.source = part.source
                     source.sku = part.sku
                     self.store.add(source)
