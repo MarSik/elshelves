@@ -23,6 +23,12 @@ class Footprint(Storm):
     pins = Int()
     kicad = Unicode() # formatting string using %d to be replaced by the number of pins from part
 
+    def __str__(self):
+        return "<Footprint id:%d name:%s smd:%s pins:%d>" % (self.id,
+                                                             self.name,
+                                                             str(self.smd),
+                                                             self.pins)
+
 class Price(Storm):
     """Model for pricing based on amount requested with history"""
     __storm_table__ = "prices"
@@ -56,18 +62,29 @@ class Source(Storm):
         self.home = home
         self.url = url
 
-class PartSource(object):
+    def __str__(self):
+        return "<Source id:%d name:%s home:%s" % (self.id,
+                                                  self.name,
+                                                  self.home)
+
+class PartSource(Storm):
     """Model for many to many relationship between Source and PartType"""
     __storm_table__ = "types_sources"
     __storm_primary__ = "part_type_id", "source_id"
 
     part_type_id = Int()
+    part_type = Reference(part_type_id, "PartType.id")
     source_id = Int()
     source = Reference(source_id, Source.id)
 
     sku = Unicode() # vendor's id of this part
     price_id = Int()
     prices = ReferenceSet(price_id, Price.id)
+
+    def __str__(self):
+        return "<PartSource part_type:%s source:%s sku:%s>" % (self.part_type.name,
+                                                               self.source.name,
+                                                               self.sku)
 
     @property
     def min_amount(self):
@@ -98,6 +115,12 @@ class PartType(Storm):
     parts = ReferenceSet(id, "Part.part_type_id")
     datasheet = Unicode()
 
+    def __str__(self):
+        return "<PartType id:%d name:%s pins:%d footprint:%s>" % (self.id,
+                                                                  self.name,
+                                                                  self.pins,
+                                                                  self.footprint)
+
     @property
     def price(self):
         """find the lowest price"""
@@ -110,6 +133,7 @@ class PartType(Storm):
             return 0
 
         return Store.of(self).find(Part, Part.part_type_id == self.id).sum(Part.count)
+
 
 class Location(Storm):
     """Model for locations"""
@@ -161,6 +185,12 @@ class Part(WithHistory):
     history_log = Int()
     history = ReferenceSet(history_log, History.log)
 
+    def __str__(self):
+        return "<Part id:%d type:%s count:%d manufacturer:%s>" % (self.id,
+                                                                  self.part_type.name,
+                                                                  self.count,
+                                                                  self.manufacturer)
+
 class Project(Storm):
     """Model for project"""
     __storm_table__ = "projects"
@@ -202,3 +232,50 @@ def getStore(url):
         s.execute("PRAGMA foreign_keys = ON;")
 
     return s
+
+
+def fill_matches(store, data):
+    search_name = data.search_name
+    sku = data.sku
+    manufacturer = data.manufacturer
+    footprint = data.footprint
+    source = data.source
+
+
+    parts = []
+    if search_name:
+        name_parts = search_name.split()
+        for name_part in name_parts:
+            parts.append(store.find(PartType,
+                            PartType.name.like(name_part, True, False) or
+                            PartType.summary.like(name_part, True, False) or
+                            PartType.description.like(name_part, True, False))
+                         .config(distinct = True)
+                         .values(PartType.id))
+
+    if sku:
+        parts.append(store.find(PartSource, sku = sku)
+                     .config(distinct = True)
+                     .values(PartSource.part_type_id))
+
+    if manufacturer:
+        parts.append(store.find(PartSource, source = source)
+                     .config(distinct = True)
+                     .values(PartSource.part_type_id))
+
+    if footprint:
+        fp = store.find(Footprint, )
+        parts.append(store.find((PartType, Footprint),
+                                Footprint.name.like(footprint, True, False),
+                                PartType.footprint_id == Footprint.id)
+                     .config(distinct = True)
+                     .values(PartType.id))
+
+    # create a set containing all part types which matched all queries
+    res = set(parts[0])
+    for p in parts[1:]:
+        res = res.intersection(set(p))
+
+    data.matches = res
+
+    return data
