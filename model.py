@@ -246,30 +246,30 @@ def fill_matches(store, data):
     if search_name:
         name_parts = search_name.split()
         for name_part in name_parts:
-            parts.append(store.find(PartType,
-                            PartType.name.like(name_part, True, False) or
-                            PartType.summary.like(name_part, True, False) or
-                            PartType.description.like(name_part, True, False))
+            parts.append(list(store.find(PartType,
+                            PartType.name.like("%%%s%%" % name_part, True, False) or
+                            PartType.summary.like("%%%s%%" % name_part, True, False) or
+                            PartType.description.like("%%%s%%" % name_part, True, False))
                          .config(distinct = True)
-                         .values(PartType.id))
+                         .values(PartType.id)))
 
     if sku:
-        parts.append(store.find(PartSource, sku = sku)
+        parts.append(list(store.find(PartSource, sku = sku)
                      .config(distinct = True)
-                     .values(PartSource.part_type_id))
+                     .values(PartSource.part_type_id)))
 
     if manufacturer:
-        parts.append(store.find(PartSource, source = source)
+        parts.append(list(store.find(PartSource, source = source)
                      .config(distinct = True)
-                     .values(PartSource.part_type_id))
+                     .values(PartSource.part_type_id)))
 
     if footprint:
         fp = store.find(Footprint, )
-        parts.append(store.find((PartType, Footprint),
+        parts.append(list(store.find((PartType, Footprint),
                                 Footprint.name.like(footprint, True, False),
                                 PartType.footprint_id == Footprint.id)
                      .config(distinct = True)
-                     .values(PartType.id))
+                     .values(PartType.id)))
 
     # create a set containing all part types which matched all queries
     res = set(parts[0])
