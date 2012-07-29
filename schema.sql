@@ -54,7 +54,7 @@ CREATE TABLE types (
        summary varchar,
        description varchar,
        pins integer,
-       footprint_id integer,
+       footprint_id integer not null,
        datasheet varchar
 );
 

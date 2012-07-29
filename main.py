@@ -17,13 +17,76 @@ class Struct:
 def e(w):
     return urwid.AttrWrap(w, "editbx", "editfc")
 
-class PartEditor(app.UIScreen):
+class PartSelector(app.UIScreen):
     def __init__(self, a, store, partlist = None, back = None):
         app.UIScreen.__init__(self, a, store, back)
-        self._partlist = partlist
+        self._partlist = [model.fill_matches(self.store, w) for w in partlist]
         self._save = app.SaveRegistry()
         self._spacer = urwid.Divider(u"-")
 
+    def _match_entry(self, selected_part_type, p_id):
+        p = self.store.get(model.PartType, p_id)
+        
+        a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
+        h = lambda w: urwid.AttrMap(w, {"header": "part header"}, {"header": "part header focus", "editbx": "editbx_f", "editfc": "editfc_f"})
+        
+        header = urwid.AttrWrap(urwid.Text(p.name), "header")
+
+        self.app.debug()
+
+        sources = [urwid.Text(u"Zdroje")]
+        
+        for s in p.sources:
+            sources.append(urwid.Columns([
+                ("fixed", len(s.name), urwid.Text(s.name)),
+                ("fixed", 1, urwid.Text(u"/")),
+                urwid.Text(s.sku)
+                ], 3))
+            
+        line1 = urwid.Columns([
+            ("fixed", 10, urwid.Text(u"")),
+            urwid.Text(u""),
+            ("fixed", 10, urwid.Text(u"footprint")),
+            ("fixed", 10, a(urwid.Text(p.footprint.name)))
+            ], 3)
+        line2 = urwid.Columns([
+            ("fixed", 10, urwid.Text("Shrnutí")),
+            a(urwid.Text(p.summary)),
+            ("fixed", 10, urwid.Text(u"pinů")),
+            ("fixed", 10, a(urwid.Text(unicode(p.pins))))
+            ], 3)
+        line3 = urwid.Columns([
+            ("fixed", 10, urwid.Text(u"")),
+            urwid.Text(u""),
+            ("fixed", 10, urwid.Text(u"počet")),
+            ("fixed", 10, a(urwid.Text(unicode(p.count))))
+            ], 3)
+        line4 = urwid.Columns([
+            ("fixed", 10, urwid.Text("Datasheet")),
+            a(urwid.Text(p.datasheet)),
+            ("fixed", 10, urwid.Text(u"")),
+            ("fixed", 10, urwid.Text(u""))
+            ], 3)
+        desc_title = urwid.Text(u"Popis")
+        desc = a(urwid.Text(p.description))
+
+        pile = h(urwid.Pile([
+            header,
+            urwid.Pile(sources),
+            line1,
+            line2,
+            line3,
+            line4,
+            desc_title,
+            desc,
+            self._spacer
+            ]))
+
+        pile = app.Selectable(pile)
+        
+        pile._data = p
+        return pile
+        
     def _entry(self, p):
         a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
         h = lambda w: urwid.AttrMap(w, {"header": "part header"}, {"header": "part header focus", "editbx": "editbx_f", "editfc": "editfc_f"})
@@ -72,18 +135,42 @@ class PartEditor(app.UIScreen):
             desc,
             self._spacer
             ]))
-        pile._data = p
+        pile._data = None
         return pile
 
     def show(self, args = None):
+        if args is None:
+            args = 0
+        
         self._save.clear()
-        listbox_content = [self._entry(p) for p in self._partlist]
-        listbox_content.append(urwid.Button(u"Save", self.save))
+        part = self._partlist[args]
+        listbox_content = [self._entry(part)]
+        listbox_content.extend([self._match_entry(part.part_type, p) for p in part.matches])
+
+        buttons = []
+        if args > 0:
+            buttons.append(urwid.Button(u"Předchozí", self.prev))
+        else:
+            buttons.append(urwid.Button(u"Zpět", lambda s,a: self.back))
+
+        if args < len(self._partlist) - 1:
+            buttons.append(urwid.Button(u"Další", self.next))
+        else:
+            buttons.append(urwid.Button(u"Uložit", self.save))
+
+        listbox_content.append(urwid.Columns(buttons, 3))
+        
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
 
         return self.body
+
+    def next(self, signal, args = None):
+        pass
+
+    def prev(self, signal, args = None):
+        pass
 
     def save(self, signal, args = None):
         # save all widgets to data objects
@@ -94,7 +181,7 @@ class PartEditor(app.UIScreen):
             # save all data to db - completeness checking is done in model
             # verification methods
             for part in self._partlist:
-                if not part.part_type_id:
+                if not part.part_type:
                     # unknown part create part type and all dependencies
                     
                     # get or create footprint
@@ -114,11 +201,7 @@ class PartEditor(app.UIScreen):
                     new_part_type.datasheet = part.datasheet
                     new_part_type.pins = int(part.pins)
                     self.store.add(new_part_type)
-                    
-                    part.part_type_id = new_part_type.id
                     part.part_type = new_part_type
-                else:
-                    part.part_type = self.store.get(model.PartType, part.part_type_id)
                     
                 # known part, just add new amount of it
                 if int(part.count) > 0:
@@ -178,7 +261,7 @@ class NewPartList(app.UIScreen):
 
     def _newpart(self):
         p = {
-            "part_type_id": u"",
+            "part_type": None,
             "search_name": u"",
             "name": u"",
             "summary": u"",
@@ -234,7 +317,7 @@ class NewPartList(app.UIScreen):
         for w in self._save:
             w.save()
 
-        w = PartEditor(self.app, self.store, self.parts, self)
+        w = PartSelector(self.app, self.store, self.parts, self)
         self.app.switch_screen(w)
 
     def input(self, key):
@@ -245,7 +328,7 @@ class NewPartList(app.UIScreen):
 
     @property
     def parts(self):
-        return [model.fill_matches(self.store, w._data) for w in self.walker[1:-1]]
+        return [w._data for w in self.walker[1:-1]]
 
 class SourceSelector(app.UIScreen):
     def __init__(self, a, store):
