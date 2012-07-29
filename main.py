@@ -10,6 +10,8 @@ import urwid.web_display
 import model
 import app
 
+from part_selector import PartSelector
+
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -17,229 +19,16 @@ class Struct:
 def e(w):
     return urwid.AttrWrap(w, "editbx", "editfc")
 
-class PartSelector(app.UIScreen):
-    def __init__(self, a, store, partlist = None, back = None):
-        app.UIScreen.__init__(self, a, store, back)
-        self._partlist = [model.fill_matches(self.store, w) for w in partlist]
-        self._save = app.SaveRegistry()
-        self._spacer = urwid.Divider(u"-")
 
-    def _match_entry(self, selected_part_type, p_id):
-        p = self.store.get(model.PartType, p_id)
-        
-        a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
-        h = lambda w: urwid.AttrMap(w, {"header": "part header"}, {"header": "part header focus", "editbx": "editbx_f", "editfc": "editfc_f"})
-        
-        header = urwid.AttrWrap(urwid.Text(p.name), "header")
-
-        self.app.debug()
-
-        sources = [urwid.Text(u"Zdroje")]
-        
-        for s in p.sources:
-            sources.append(urwid.Columns([
-                ("fixed", len(s.name), urwid.Text(s.name)),
-                ("fixed", 1, urwid.Text(u"/")),
-                urwid.Text(s.sku)
-                ], 3))
-            
-        line1 = urwid.Columns([
-            ("fixed", 10, urwid.Text(u"")),
-            urwid.Text(u""),
-            ("fixed", 10, urwid.Text(u"footprint")),
-            ("fixed", 10, a(urwid.Text(p.footprint.name)))
-            ], 3)
-        line2 = urwid.Columns([
-            ("fixed", 10, urwid.Text("Shrnutí")),
-            a(urwid.Text(p.summary)),
-            ("fixed", 10, urwid.Text(u"pinů")),
-            ("fixed", 10, a(urwid.Text(unicode(p.pins))))
-            ], 3)
-        line3 = urwid.Columns([
-            ("fixed", 10, urwid.Text(u"")),
-            urwid.Text(u""),
-            ("fixed", 10, urwid.Text(u"počet")),
-            ("fixed", 10, a(urwid.Text(unicode(p.count))))
-            ], 3)
-        line4 = urwid.Columns([
-            ("fixed", 10, urwid.Text("Datasheet")),
-            a(urwid.Text(p.datasheet)),
-            ("fixed", 10, urwid.Text(u"")),
-            ("fixed", 10, urwid.Text(u""))
-            ], 3)
-        desc_title = urwid.Text(u"Popis")
-        desc = a(urwid.Text(p.description))
-
-        pile = h(urwid.Pile([
-            header,
-            urwid.Pile(sources),
-            line1,
-            line2,
-            line3,
-            line4,
-            desc_title,
-            desc,
-            self._spacer
-            ]))
-
-        pile = app.Selectable(pile)
-        
-        pile._data = p
-        return pile
-        
-    def _entry(self, p):
-        a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
-        h = lambda w: urwid.AttrMap(w, {"header": "part header"}, {"header": "part header focus", "editbx": "editbx_f", "editfc": "editfc_f"})
-        header = urwid.AttrWrap(urwid.Columns([
-            ("weight", 2, urwid.Text(p.search_name)),
-            urwid.Text(p.date or u"-dnes-"),
-            ("fixed", len(p.source.name), urwid.Text(p.source.name)),
-            ("fixed", 1, urwid.Text(u"/")),
-            a(urwid.Edit(u"", p.sku).bind(p, "sku").reg(self._save)),
-            ("weight", 1, urwid.Text(u"F:%d" % len(p.matches)))
-            ], 1), "header")
-        line1 = urwid.Columns([
-            ("fixed", 10, urwid.Text("Název")),
-            a(urwid.Edit(u"", p.name).bind(p, "name").reg(self._save)),
-            ("fixed", 10, urwid.Text(u"footprint")),
-            ("fixed", 10, a(urwid.Edit(u"", p.footprint).bind(p, "footprint").reg(self._save)))
-            ], 3)
-        line2 = urwid.Columns([
-            ("fixed", 10, urwid.Text("Shrnutí")),
-            a(urwid.Edit(u"", p.summary).bind(p, "summary").reg(self._save)),
-            ("fixed", 10, urwid.Text(u"pinů")),
-            ("fixed", 10, a(urwid.IntEdit(u"", unicode(p.pins)).bind(p, "pins").reg(self._save)))
-            ], 3)
-        line3 = urwid.Columns([
-            ("fixed", 10, urwid.Text("Výrobce")),
-            a(urwid.Edit(u"", p.manufacturer).bind(p, "manufacturer").reg(self._save)),
-            ("fixed", 10, urwid.Text(u"počet")),
-            ("fixed", 10, a(urwid.IntEdit(u"", unicode(p.count)).bind(p, "count").reg(self._save)))
-            ], 3)
-        line4 = urwid.Columns([
-            ("fixed", 10, urwid.Text("Datasheet")),
-            a(urwid.Edit(u"", p.datasheet).bind(p, "datasheet").reg(self._save)),
-            ("fixed", 10, urwid.Text(u"cena")),
-            ("fixed", 10, a(urwid.Edit(u"", unicode(p.unitprice)).bind(p, "unitprice").reg(self._save)))
-            ], 3)
-        desc_title = urwid.Text(u"Popis")
-        desc = a(urwid.Edit(u"", p.description, multiline = True).bind(p, "description").reg(self._save))
-
-        pile = h(urwid.Pile([
-            header,
-            line1,
-            line2,
-            line3,
-            line4,
-            desc_title,
-            desc,
-            self._spacer
-            ]))
-        pile._data = None
-        return pile
-
-    def show(self, args = None):
-        if args is None:
-            args = 0
-        
-        self._save.clear()
-        part = self._partlist[args]
-        listbox_content = [self._entry(part)]
-        listbox_content.extend([self._match_entry(part.part_type, p) for p in part.matches])
-
-        buttons = []
-        if args > 0:
-            buttons.append(urwid.Button(u"Předchozí", self.prev))
-        else:
-            buttons.append(urwid.Button(u"Zpět", lambda s,a: self.back))
-
-        if args < len(self._partlist) - 1:
-            buttons.append(urwid.Button(u"Další", self.next))
-        else:
-            buttons.append(urwid.Button(u"Uložit", self.save))
-
-        listbox_content.append(urwid.Columns(buttons, 3))
-        
-        self.walker = urwid.SimpleListWalker(listbox_content)
-        listbox = urwid.ListBox(self.walker)
-        self.body = urwid.AttrWrap(listbox, 'body')
-
-        return self.body
-
-    def next(self, signal, args = None):
-        pass
-
-    def prev(self, signal, args = None):
-        pass
-
-    def save(self, signal, args = None):
-        # save all widgets to data objects
-        for w in self._save:
-            w.save()
-
-        try:
-            # save all data to db - completeness checking is done in model
-            # verification methods
-            for part in self._partlist:
-                if not part.part_type:
-                    # unknown part create part type and all dependencies
-                    
-                    # get or create footprint
-                    footprint = self.store.find(model.Footprint, name = part.footprint).one()
-                    if footprint is None:
-                        footprint = model.Footprint()
-                        footprint.name = part.footprint
-                        footprint.pins = part.pins
-                        self.store.add(footprint)
-
-                    # part_type
-                    new_part_type = model.PartType()
-                    new_part_type.footprint = footprint
-                    new_part_type.name = part.name
-                    new_part_type.summary = part.summary
-                    new_part_type.description = part.description
-                    new_part_type.datasheet = part.datasheet
-                    new_part_type.pins = int(part.pins)
-                    self.store.add(new_part_type)
-                    part.part_type = new_part_type
-                    
-                # known part, just add new amount of it
-                if int(part.count) > 0:
-                    new_part = model.Part()
-                    new_part.part_type = part.part_type
-                    new_part.count = int(part.count)
-                    new_part.date = part.date
-                    new_part.price = float(part.unitprice)
-                    new_part.manufacturer = part.manufacturer
-                    new_part.source = part.source
-                    self.store.add(new_part)
-
-                # check if we have ever bought it from this source (with this sku if it was entered)
-                sources = part.part_type.sources.find(model.PartSource.source == part.source)
-                if part.sku:
-                    sources = filter(lambda s: s.sku == part.sku, sources)
-
-                # if not and sku was entered, create new sku
-                if not sources and part.sku:
-                    # source/sku record
-                    source = model.PartSource()
-                    source.part_type = part.part_type
-                    source.source = part.source
-                    source.sku = part.sku
-                    self.store.add(source)
-
-            self.store.commit()
-            self.close()
-        except Exception:
-            self.store.rollback()
-            raise
-
-class NewPartList(app.UIScreen):
-    def __init__(self, a, store, source, date = None, back = None):
+class SearchForParts(app.UIScreen):
+    def __init__(self, a, store, source, date = None, back = None, action = None, action_kwargs = {}, selector = PartSelector):
         app.UIScreen.__init__(self, a, store, back)
         self._source = source
         self._date = None
         self._save = app.SaveRegistry()
+        self._action = action
+        self._action_kwargs = action_kwargs
+        self._selector = selector
 
         w = urwid.Columns([
             ("weight", 2, urwid.Text(u"name")),
@@ -317,7 +106,8 @@ class NewPartList(app.UIScreen):
         for w in self._save:
             w.save()
 
-        w = PartSelector(self.app, self.store, self.parts, self)
+        w = self._selector(self.app, self.store, self.parts, back = self, action = self._action,
+                           action_kwargs = self._action_kwargs)
         self.app.switch_screen(w)
 
     def input(self, key):
@@ -362,7 +152,7 @@ class SourceSelector(app.UIScreen):
             self.app.switch_screen_with_return(source)
         elif key == "enter":
             widget, id = self.walker.get_focus()
-            w = NewPartList(self.app, self.store, widget._data)
+            w = SearchForParts(self.app, self.store, widget._data)
             self.app.switch_screen_with_return(w)
         else:
             return key

@@ -1,4 +1,4 @@
-from storm.locals import create_database, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float
+from storm.locals import create_database, Desc, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float
 
 
 class Tag(Storm):
@@ -96,7 +96,11 @@ class PartSource(Storm):
 
     @property
     def price(self):
-        return self.prices.order_by(Desc(Price.time)).order_by(Price.amount).all()
+        cheapest = self.prices.order_by(Desc(Price.time)).order_by(Price.amount).any()
+        if cheapest:
+            return price
+        else:
+            return 0.0
 
 class PartType(Storm):
     """Model for one part type"""
