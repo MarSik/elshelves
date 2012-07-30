@@ -118,6 +118,7 @@ class PartType(Storm):
     sources = ReferenceSet(id, PartSource.part_type_id)
     parts = ReferenceSet(id, "Part.part_type_id")
     datasheet = Unicode()
+    manufacturer = Unicode()
 
     def __str__(self):
         return "<PartType id:%d name:%s pins:%d footprint:%s>" % (self.id,
@@ -153,25 +154,23 @@ class History(Storm):
     """Model for historical records"""
     __storm_table__ = "history"
 
+    INCOMING = 0
+    MOVED = 1
+    UPDATED = 2
+    USED = 3
+    DESTROYED = 4
+    TESTED = 5
+    SHIPPED = 6
+
     id = Int(primary=True)
-    log = Int() # (id, log) je unikatni s indexem
+    parent = Reference(id, "History.id")
     time = DateTime()
+    event = Int()
     description = Unicode()
     location_id = Int()
     location = Reference(location_id, Location.id)
 
-class WithHistory(Storm):
-    """Base class for evyrything with trackabe history"""
-
-    @property
-    def location(self):
-        last = self.history.order_by(Desc(History.time)).one()
-        if last:
-            return last.location
-        else:
-            return None
-
-class Part(WithHistory):
+class Part(Storm):
     """Model for a group of identical parts"""
     __storm_table__ = "parts"
 
@@ -183,11 +182,10 @@ class Part(WithHistory):
     price = Float()
     part_type_id = Int()
     part_type = Reference(part_type_id, PartType.id)
-    manufacturer = Unicode()
     assignment_id = Int()
     assignment = Reference(assignment_id, "Assignment.id")
-    history_log = Int()
-    history = ReferenceSet(history_log, History.log)
+    history_id = Int()
+    history = Reference(history_id, History.id)
 
     def __str__(self):
         return "<Part id:%d type:%s count:%d manufacturer:%s>" % (self.id,
@@ -204,7 +202,7 @@ class Project(Storm):
     summary = Unicode(default=u"pokus")
     description = Unicode()
 
-class Item(WithHistory):
+class Item(Storm):
     """Model for actual built items"""
     __storm_table__ = "items"
 
@@ -215,8 +213,8 @@ class Item(WithHistory):
     serial = Unicode()
     project_id = Int()
     project = Reference(project_id, Project.id)
-    history_log = Int()
-    history = ReferenceSet(history_log, History.log)
+    history_id = Int()
+    history = Reference(history_id, History.id)
 
 class Assignment(Storm):
     """Model for many to many relationship between Source and PartType"""
@@ -229,11 +227,16 @@ class Assignment(Storm):
     item = Reference(item_id, Item.id)
     count = Int()
 
-def getStore(url):
+def getStore(url, create = False):
     d = create_database(url)
     s = Store(d)
     if url.startswith("sqlite:"):
         s.execute("PRAGMA foreign_keys = ON;")
+
+    if create:
+        schema = file(os.path.join(os.path.dirname(__file__), "schema.sql"), "r").read()
+        s.execute(schema)
+        s.commit()
 
     return s
 
@@ -244,7 +247,6 @@ def fill_matches(store, data):
     manufacturer = data.manufacturer
     footprint = data.footprint
     source = data.source
-
 
     parts = []
     if search_name:
@@ -258,19 +260,19 @@ def fill_matches(store, data):
                          .values(PartType.id)))
 
     if sku:
-        parts.append(list(store.find(PartSource, sku = sku)
+        # do not filter by source unless we are also checking for sku
+        parts.append(list(store.find(PartSource, PartSource.sku == sku, PartSource.source == source)
                      .config(distinct = True)
                      .values(PartSource.part_type_id)))
 
     if manufacturer:
-        parts.append(list(store.find(PartSource, source = source)
+        parts.append(list(store.find(PartType, PartType.manufacturer.like("%%%s%%" % manufacturer, True, False))
                      .config(distinct = True)
-                     .values(PartSource.part_type_id)))
+                     .values(PartType.id)))
 
     if footprint:
-        fp = store.find(Footprint, )
         parts.append(list(store.find((PartType, Footprint),
-                                Footprint.name.like(footprint, True, False),
+                                Footprint.name.like("%%%s%%" % footprint, True, False),
                                 PartType.footprint_id == Footprint.id)
                      .config(distinct = True)
                      .values(PartType.id)))
