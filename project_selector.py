@@ -1,36 +1,21 @@
-#!/usr/bin/python
-# encoding: utf8
-
-__version__ = "0.0.0"
-__author__ = "Martin Sivak <mars@montik.net>"
-
-import urwid
-import urwid.raw_display
-import urwid.web_display
-import model
 import app
-
-from part_selector import SearchForParts, PartSelector
+import urwid
+import model
 from selector import ItemSelector
+from part_selector import SearchForParts
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
+class ItemAssigner(app.UIScreen):
+    def __init__(self, a, store):
+        app.UIScreen.__init__(self, a, store)
 
-def e(w):
-    return urwid.AttrWrap(w, "editbx", "editfc")
-
-
-class SourceEditor(app.UIScreen):
+class ProjectEditor(app.UIScreen):
     def __init__(self, a, store, source = None):
         app.UIScreen.__init__(self, a, store)
         if source is None:
-            source = model.Source(
+            source = model.Project(
                 name = u"",
                 summary = u"",
-                description = u"",
-                home = u"http://",
-                url = u"http://.../%s"
+                description = u""
                 )
         self._source = source
         self._save = app.SaveRegistry()
@@ -39,7 +24,6 @@ class SourceEditor(app.UIScreen):
         self._save.clear()
         listbox_content = [
             urwid.Edit(u"Název", self._source.name or u"").bind(self._source, "name").reg(self._save),
-            urwid.Edit(u"Homepage", self._source.home or u"").bind(self._source, "home").reg(self._save),
             urwid.Edit(u"Krátký popis", self._source.summary or u"").bind(self._source, "summary").reg(self._save),
             urwid.Text(u"Popis"),
             urwid.Edit(u"", self._source.description or u"", multiline=True).bind(self._source, "description").reg(self._save),
@@ -61,23 +45,9 @@ class SourceEditor(app.UIScreen):
         self.store.commit()
         self.close()
 
-class SourceSelector(ItemSelector):
-    MODEL = model.Source
-    EDITOR = SourceEditor
-
-    def __init__(self, a, store):
-        app.UIScreen.__init__(self, a, store)
+class ProjectSelector(ItemSelector):
+    EDITOR = ProjectEditor
+    MODEL = model.Project
 
     def select(self, widget, id):
-        return SearchForParts(self.app, self.store, source = widget._data)
-
-def main():
-    store = model.getStore("sqlite:shelves.sqlite3")
-    text_header = "Shelves 0.0.0"
-    a = app.App(text_header)
-
-    source_screen = SourceSelector(a, store)
-    a.switch_screen_modal(source_screen)
-
-if '__main__'==__name__ or urwid.web_display.is_web_request():
-    main()
+        return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"project": widget._data})

@@ -260,8 +260,12 @@ def fill_matches(store, data):
                          .values(PartType.id)))
 
     if sku:
+        args = [ PartSource.sku == sku ]
+        if source is not None:
+            args.append(PartSource.source == source)
+
         # do not filter by source unless we are also checking for sku
-        parts.append(list(store.find(PartSource, PartSource.sku == sku, PartSource.source == source)
+        parts.append(list(store.find(PartSource, *args)
                      .config(distinct = True)
                      .values(PartSource.part_type_id)))
 
