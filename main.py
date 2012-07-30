@@ -10,7 +10,7 @@ import urwid.web_display
 import model
 import app
 
-from part_selector import SearchForParts, PartSelector
+from part_selector import SearchForParts, PartSelector, PartCreator
 from selector import ItemSelector
 
 def e(w):
@@ -65,7 +65,7 @@ class SourceSelector(ItemSelector):
         app.UIScreen.__init__(self, a, store)
 
     def select(self, widget, id):
-        return SearchForParts(self.app, self.store, source = widget._data)
+        return SearchForParts(self.app, self.store, action = PartCreator, source = widget._data)
 
 def main():
     store = model.getStore("sqlite:shelves.sqlite3")

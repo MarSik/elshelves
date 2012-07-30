@@ -283,7 +283,11 @@ def fill_matches(store, data):
                      .values(PartType.id)))
 
     # create a set containing all part types which matched all queries
-    res = set(parts[0])
+    if parts:
+        res = set(parts[0])
+    else:
+        res = set()
+
     for p in parts[1:]:
         res = res.intersection(set(p))
 

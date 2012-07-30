@@ -174,7 +174,7 @@ class PartSelector(app.UIScreen):
             ("fixed", len(p.source.name), urwid.Text(p.source.name)),
             ("fixed", 1, urwid.Text(u"/")),
             a(urwid.Edit(u"", p.sku).bind(p, "sku").reg(self._save)),
-            ("weight", 1, urwid.Text(u"F:%d" % len(p.matches)))
+            ("weight", 1, urwid.Text(u"%d/%d" % (self._current, len(self._partlist))))
             ], 1), "header")
         line1 = urwid.Columns([
             ("fixed", 10, urwid.Text("Název")),
@@ -265,7 +265,7 @@ class PartSelector(app.UIScreen):
         for w in self._save:
             w.save()
 
-        a = self.action(self.app, self.store, self._partslist, self, **self.action_kwargs)
+        a = self._action(self.app, self.store, self._partlist, self, **self._action_kwargs)
         self.app.switch_screen(a)
 
 class SearchForParts(app.UIScreen):
