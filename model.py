@@ -1,5 +1,5 @@
 from storm.locals import create_database, Desc, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float
-
+import os.path
 
 class Tag(Storm):
     """Model for tags"""
@@ -234,8 +234,9 @@ def getStore(url, create = False):
         s.execute("PRAGMA foreign_keys = ON;")
 
     if create:
-        schema = file(os.path.join(os.path.dirname(__file__), "schema.sql"), "r").read()
-        s.execute(schema)
+        schema = file(os.path.join(os.path.dirname(__file__), "schema.sql"), "r").read().split("\n\n")
+        for cmd in schema:
+            s.execute(cmd)
         s.commit()
 
     return s

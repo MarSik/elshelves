@@ -4,6 +4,11 @@ import urwid
 import app
 import model
 
+class Struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 class PartCreator(app.UIScreen):
     def __init__(self, a, store, partlist, back = None):
         app.UIScreen.__init__(self, a, store, back)

@@ -13,10 +13,6 @@ import app
 from part_selector import SearchForParts, PartSelector
 from selector import ItemSelector
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
 def e(w):
     return urwid.AttrWrap(w, "editbx", "editfc")
 
