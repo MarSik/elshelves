@@ -23,7 +23,7 @@ class PartCreator(app.UIScreen):
             try:
                 self.save()
                 self.close()
-            except Exception:
+            except Exception, e:
                 self.back(0)
 
     def verify(self):
@@ -66,7 +66,8 @@ class PartCreator(app.UIScreen):
                     new_part = model.Part()
                     new_part.part_type = part.part_type
                     new_part.count = int(part.count)
-                    new_part.date = part.date
+                    if part.date:
+                        new_part.date = part.date
                     new_part.price = float(part.unitprice)
                     new_part.source = part.source
                     new_part.history = new_history
@@ -98,20 +99,19 @@ class PartSelector(app.UIScreen):
         app.UIScreen.__init__(self, a, store, back)
         self._partlist = [model.fill_matches(self.store, w) for w in partlist]
         self._save = app.SaveRegistry()
-        self._spacer = urwid.Divider(u"-")
+        self._spacer = urwid.Divider(u" ")
         self._current = 0
         self._create_new = create_new
         self._action = action
         self._action_kwargs = action_kwargs
 
+        self._h = lambda w: urwid.AttrMap(w, {"header": "part header", "constfc": "editbx"}, {"header": "part header focus", "constfc": "constfc", "editbx": "editbx_f", "editfc": "editfc_f"})
+        self._a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
+        self._c = lambda w: urwid.AttrWrap(w, "constfc")
+
+
     def _match_entry(self, selected_part_type, p_id):
         p = self.store.get(model.PartType, p_id)
-
-        a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
-        h = lambda w: urwid.AttrMap(w, {"header": "part header"}, {"header": "part header focus", "editbx": "editbx_f", "editfc": "editfc_f"})
-
-
-        self.app.debug()
 
         sources = [urwid.Text(u"Zdroje")]
 
@@ -126,30 +126,28 @@ class PartSelector(app.UIScreen):
         header = urwid.AttrWrap(urwid.Columns([
             urwid.Text(p.name),
             ("fixed", 10, urwid.Text(u"footprint")),
-            ("fixed", 10, a(urwid.Text(p.footprint.name)))
+            ("fixed", 10, self._c(urwid.Text(p.footprint.name)))
             ], 3), "header")
         line2 = urwid.Columns([
             ("fixed", 10, urwid.Text("Shrnutí")),
-            a(urwid.Text(p.summary)),
+            self._c(urwid.Text(p.summary)),
             ("fixed", 10, urwid.Text(u"pinů")),
-            ("fixed", 10, a(urwid.Text(unicode(p.pins))))
+            ("fixed", 10, self._c(urwid.Text(unicode(p.pins))))
             ], 3)
         line3 = urwid.Columns([
             ("fixed", 10, urwid.Text(u"")),
             urwid.Text(u""),
             ("fixed", 10, urwid.Text(u"počet")),
-            ("fixed", 10, a(urwid.Text(unicode(p.count))))
+            ("fixed", 10, self._c(urwid.Text(unicode(p.count))))
             ], 3)
         line4 = urwid.Columns([
             ("fixed", 10, urwid.Text("Datasheet")),
-            a(urwid.Text(p.datasheet)),
-            ("fixed", 10, urwid.Text(u"")),
-            ("fixed", 10, urwid.Text(u""))
+            self._c(urwid.Text(p.datasheet)),
             ], 3)
         desc_title = urwid.Text(u"Popis")
-        desc = a(urwid.Text(p.description))
+        desc = self._c(urwid.Text(p.description))
 
-        pile = h(urwid.Pile([
+        pile = urwid.Pile([
             header,
             line2,
             line3,
@@ -158,7 +156,7 @@ class PartSelector(app.UIScreen):
             desc_title,
             desc,
             self._spacer
-            ]))
+            ])
 
         pile = app.Selectable(pile)
 
@@ -166,44 +164,33 @@ class PartSelector(app.UIScreen):
         return pile
 
     def _entry(self, p):
-        a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
-        h = lambda w: urwid.AttrMap(w, {"header": "part header"}, {"header": "part header focus", "editbx": "editbx_f", "editfc": "editfc_f"})
-        header = urwid.AttrWrap(urwid.Columns([
-            ("weight", 2, urwid.Text(p.search_name)),
-            urwid.Text(p.date or u"-dnes-"),
-            ("fixed", len(p.source.name), urwid.Text(p.source.name)),
-            ("fixed", 1, urwid.Text(u"/")),
-            a(urwid.Edit(u"", p.sku).bind(p, "sku").reg(self._save)),
-            ("weight", 1, urwid.Text(u"%d/%d" % (self._current, len(self._partlist))))
-            ], 1), "header")
+        header = urwid.AttrWrap(urwid.Text(u"Nová součástka"), "header")
         line1 = urwid.Columns([
             ("fixed", 10, urwid.Text("Název")),
-            a(urwid.Edit(u"", p.name).bind(p, "name").reg(self._save)),
+            self._a(urwid.Edit(u"", p.name).bind(p, "name").reg(self._save)),
             ("fixed", 10, urwid.Text(u"footprint")),
-            ("fixed", 10, a(urwid.Edit(u"", p.footprint).bind(p, "footprint").reg(self._save)))
+            ("fixed", 10, self._a(urwid.Edit(u"", p.footprint).bind(p, "footprint").reg(self._save)))
             ], 3)
         line2 = urwid.Columns([
             ("fixed", 10, urwid.Text("Shrnutí")),
-            a(urwid.Edit(u"", p.summary).bind(p, "summary").reg(self._save)),
+            self._a(urwid.Edit(u"", p.summary).bind(p, "summary").reg(self._save)),
             ("fixed", 10, urwid.Text(u"pinů")),
-            ("fixed", 10, a(urwid.IntEdit(u"", unicode(p.pins)).bind(p, "pins").reg(self._save)))
+            ("fixed", 10, self._a(urwid.IntEdit(u"", unicode(p.pins)).bind(p, "pins").reg(self._save)))
             ], 3)
         line3 = urwid.Columns([
             ("fixed", 10, urwid.Text("Výrobce")),
-            a(urwid.Edit(u"", p.manufacturer).bind(p, "manufacturer").reg(self._save)),
-            ("fixed", 10, urwid.Text(u"počet")),
-            ("fixed", 10, a(urwid.IntEdit(u"", unicode(p.count)).bind(p, "count").reg(self._save)))
+            self._a(urwid.Edit(u"", p.manufacturer).bind(p, "manufacturer").reg(self._save)),
+            ("fixed", 10, urwid.Text(u"sku")),
+            ("fixed", 10, self._a(urwid.Edit(u"", p.sku).bind(p, "sku").reg(self._save)))
             ], 3)
         line4 = urwid.Columns([
             ("fixed", 10, urwid.Text("Datasheet")),
-            a(urwid.Edit(u"", p.datasheet).bind(p, "datasheet").reg(self._save)),
-            ("fixed", 10, urwid.Text(u"cena")),
-            ("fixed", 10, a(urwid.Edit(u"", unicode(p.unitprice)).bind(p, "unitprice").reg(self._save)))
+            self._a(urwid.Edit(u"", p.datasheet).bind(p, "datasheet").reg(self._save)),
             ], 3)
         desc_title = urwid.Text(u"Popis")
-        desc = a(urwid.Edit(u"", p.description, multiline = True).bind(p, "description").reg(self._save))
+        desc = self._a(urwid.Edit(u"", p.description, multiline = True).bind(p, "description").reg(self._save))
 
-        pile = h(urwid.Pile([
+        pile = urwid.Pile([
             header,
             line1,
             line2,
@@ -212,14 +199,27 @@ class PartSelector(app.UIScreen):
             desc_title,
             desc,
             self._spacer
-            ]))
+            ])
         pile._data = None
         return pile
 
-    def _notfound(self, part):
+    def _notfound(self, p):
         return urwid.Text(u"Not found")
 
+    def _header(self, p):
+        return urwid.AttrWrap(urwid.Columns([
+            ("weight", 2, urwid.Text(p.search_name)),
+            urwid.Text(p.date or u"-dnes-"),
+            ("fixed", len(p.source.name), urwid.Text(p.source.name)),
+            ("fixed", 5, urwid.Text(u"cena:")),
+            self._a(urwid.IntEdit(u"", p.unitprice).bind(p, "unitprice").reg(self._save)),
+            ("fixed", 6, urwid.Text(u"počet:")),
+            self._a(urwid.IntEdit(u"", p.count).bind(p, "count").reg(self._save)),
+            ("weight", 1, urwid.Text(u"[%d/%d]" % (self._current + 1, len(self._partlist))))
+            ], 1), "header")
+
     def show(self, args = None):
+        
         if args is None:
             args = 0
 
@@ -228,11 +228,26 @@ class PartSelector(app.UIScreen):
         self._save.clear()
         part = self._partlist[args]
         listbox_content = []
-        if self._create_new:
-            listbox_content.append(self._entry(part))
+        
         existing_parts = [self._match_entry(part.part_type, p) for p in part.matches]
-        if existing_parts:
-            listbox_content.extend(existing_parts)
+        if self._create_new:
+            existing_parts.append(self._entry(part))
+
+        if part.part_type and not part.part_type.id in part.matches:
+            part.part_type = None
+            
+        if part.part_type is None and len(existing_parts) == 1:
+            part.part_type = existing_parts[0]._data
+
+        #sort the content so the selected part is on top
+        head_part = filter(lambda p: p._data == part.part_type, existing_parts)
+        if head_part:
+            pile = self._h(urwid.Pile([
+                self._header(part),
+                head_part[0]
+                ]))
+            pile._data = head_part[0]._data
+            listbox_content.append(pile)
         else:
             listbox_content.append(self._notfound(part))
 
@@ -240,7 +255,7 @@ class PartSelector(app.UIScreen):
         if args > 0:
             buttons.append(urwid.Button(u"Předchozí", self.prev))
         else:
-            buttons.append(urwid.Button(u"Zpět", lambda s,a: self.back))
+            buttons.append(urwid.Button(u"Zpět", lambda a: self.back()))
 
         if args < len(self._partlist) - 1:
             buttons.append(urwid.Button(u"Další", self.next))
@@ -249,6 +264,14 @@ class PartSelector(app.UIScreen):
 
         listbox_content.append(urwid.Columns(buttons, 3))
 
+        if len(existing_parts) > 1:
+            def _hdata(p):
+                h = self._h(p)
+                h._data = p._data
+                return h
+            listbox_content.extend([self._spacer, urwid.Text(u"Další možnosti:"), urwid.Divider(u"="), self._spacer])
+            listbox_content.extend([_hdata(p) for p in existing_parts if p._data != part.part_type])
+        
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
@@ -267,6 +290,19 @@ class PartSelector(app.UIScreen):
 
         a = self._action(self.app, self.store, self._partlist, self, **self._action_kwargs)
         self.app.switch_screen(a)
+
+    def input(self, key):
+        if key == "enter":
+            for w in self._save:
+                w.save()
+
+            w, id = self.walker.get_focus()
+            self.app.debug()
+            self._partlist[self._current].part_type = w._data
+            self.app.switch_screen(self, self._current)
+            return None
+        else:
+            return key
 
 class SearchForParts(app.UIScreen):
     def __init__(self, a, store, source = None, date = None, back = None, action = None, action_kwargs = {}, selector = PartSelector):

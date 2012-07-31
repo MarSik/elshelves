@@ -8,10 +8,11 @@ class App(object):
         ('body','black','light gray', 'standout'),
         ('reverse','light gray','black'),
         ('header','white','dark red', 'bold'),
-        ('part header', 'black', 'light gray'),
+        ('part header', 'light gray', 'black'),
         ('part header focus', 'black', 'white', 'standout'),
         ('important','dark blue','light gray',('standout','underline')),
         ('editfc','black', 'white', 'bold'),
+        ('constfc','light gray', 'black', 'bold'),
         ('editbx','black', 'white'),
         ('editfc_f','white', 'dark blue', 'bold'),
         ('editbx_f','light gray', 'dark blue'),
@@ -38,8 +39,8 @@ class App(object):
         self._screens = []
 
     def switch_screen(self, ui, args = None):
-        self._screens.pop()
-        self._screens.append((ui, args, None))
+        oldscr, oldattr, oldloop = self._screens.pop()
+        self._screens.append((ui, args, oldloop))
         self.redraw()
 
     def switch_screen_with_return(self, ui, args = None):
@@ -54,7 +55,8 @@ class App(object):
     def close_screen(self, scr = None):
         oldscr, oldattr, oldloop = self._screens.pop()
         if scr is not None:
-            assert oldscr == scr
+            if oldscr != scr:
+                self.debug()
 
         # we are in modal window, end it's loop
         assert oldloop != True # this cannot happen, if we are closing the window, the loop must be running
@@ -217,8 +219,15 @@ def save(self):
     assert type(self.edit_text) == unicode
     setattr(obj, attr, self.edit_text)
 
+def intsave(self):
+    """Save the value to the binded data object."""
+    assert hasattr(self, "_bind") and self._bind
+    (obj, attr) = self._bind
+    setattr(obj, attr, self.value())
+
 urwid.Edit.bind = bind
 urwid.Edit.bind_live = bind_live
 urwid.Edit._bind_live_cb = _bind_live_cb
 urwid.Edit.reg = reg
 urwid.Edit.save = save
+urwid.IntEdit.save = intsave

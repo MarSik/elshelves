@@ -202,6 +202,11 @@ class Project(Storm):
     summary = Unicode(default=u"pokus")
     description = Unicode()
 
+    def __init__(self, name = u"", summary = u"", description = u""):
+        self.name = name
+        self.summary = summary
+        self.description = description
+
 class Item(Storm):
     """Model for actual built items"""
     __storm_table__ = "items"
@@ -227,6 +232,14 @@ class Assignment(Storm):
     item = Reference(item_id, Item.id)
     count = Int()
 
+class Meta(Storm):
+    """Model for many to many relationship between Source and PartType"""
+    __storm_table__ = "meta"
+
+    key = Unicode(primary=True)
+    value = Unicode()
+    changed = DateTime()
+
 def getStore(url, create = False):
     d = create_database(url)
     s = Store(d)
@@ -237,6 +250,11 @@ def getStore(url, create = False):
         schema = file(os.path.join(os.path.dirname(__file__), "schema.sql"), "r").read().split("\n\n")
         for cmd in schema:
             s.execute(cmd)
+
+        version = Meta()
+        version.key = u"created"
+        s.add(version)
+        
         s.commit()
 
     return s

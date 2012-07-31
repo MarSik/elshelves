@@ -1,3 +1,5 @@
+# encoding: utf8
+
 import app
 import urwid
 import model

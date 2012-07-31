@@ -1,3 +1,11 @@
+CREATE TABLE meta (
+       key varchar PRIMARY KEY,
+       value varchar,
+       changed timestamp default CURRENT_TIMESTAMP
+);
+
+INSERT INTO meta VALUES ("version", "0.0.0");
+
 CREATE TABLE sources (
        id integer PRIMARY KEY autoincrement,
        name varchar not null check (length(name)),

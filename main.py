@@ -12,10 +12,25 @@ import app
 
 from part_selector import SearchForParts, PartSelector, PartCreator
 from selector import ItemSelector
+from project_selector import ProjectSelector
 
 def e(w):
     return urwid.AttrWrap(w, "editbx", "editfc")
 
+class Actions(app.UIScreen):
+    def show(self, args = None):
+        content = [
+            urwid.Button(u"Příjem", self._switch_screen, SourceSelector),
+            urwid.Button(u"Projekt", self._switch_screen, ProjectSelector)
+            ]
+
+        self.body = urwid.GridFlow(content, 13, 3, 1, "left")
+        return urwid.Filler(self.body)
+        
+
+    def _switch_screen(self, signal, screen):
+        s = screen(self.app, self.store)
+        self.app.switch_screen_with_return(s)
 
 class SourceEditor(app.UIScreen):
     def __init__(self, a, store, source = None):
@@ -71,9 +86,8 @@ def main():
     store = model.getStore("sqlite:shelves.sqlite3")
     text_header = "Shelves 0.0.0"
     a = app.App(text_header)
-
-    source_screen = SourceSelector(a, store)
-    a.switch_screen_modal(source_screen)
+    actions_screen = Actions(a, store)
+    a.switch_screen_modal(actions_screen)
 
 if '__main__'==__name__ or urwid.web_display.is_web_request():
     main()
