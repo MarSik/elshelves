@@ -83,25 +83,38 @@ class GenericSelector(app.UIScreen):
 
         return self.body
 
+
     def input(self, key):
-        if key == "n":
-            new_project = self.EDITOR(self.app, self.store, caller = self)
-            self.app.switch_screen_with_return(new_project)
+        if key == "a":
+            w = self.add()
+            if w:
+                self.app.switch_screen_with_return(w)
         elif key == "e":
             widget, id = self.walker.get_focus()
-            project = self.EDITOR(self.app, self.store, widget._data, caller = self)
-            self.app.switch_screen_with_return(project)
+            w = self.edit(widget, id)
+            if w:
+                self.app.switch_screen_with_return(w)
         elif key == "d":
             widget, id = self.walker.get_focus()
-            self.store.remove(widget._data)
-            self.store.commit()
-            self.app.switch_screen(self)
+            self.remove(widget, id)
         elif key == "enter":
             widget, id = self.walker.get_focus()
             w = self.select(widget, id)
-            self.app.switch_screen_with_return(w)
+            if w:
+                self.app.switch_screen_with_return(w)
         else:
             return key
+
+    def remove(self, widget, id):
+        self.store.remove(widget._data)
+        self.store.commit()
+        self.app.switch_screen(self)
+
+    def add(self):
+        return self.EDITOR(self.app, self.store, None, caller = self)
+
+    def edit(self, widget, id):
+        return self.EDITOR(self.app, self.store, widget._data, caller = self)
 
     def select(self, widget, id):
         return SearchForParts(self.app, self.store, action = self.ACTION)

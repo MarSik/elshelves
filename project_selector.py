@@ -7,11 +7,97 @@ from selector import GenericSelector, GenericEditor
 from part_selector import SearchForParts
 
 class ItemAssigner(app.UIScreen):
-    pass
+    def __init__(self, a, store, partlist, item, back=None):
+        app.UIScreen.__init__(self, a, store, back)
+        self._item = item
+        self._partlist = partlist
+
+    def show(self, args=None):
+        # run all model pre-check verifiers
+        errors = self.verify()
+        if errors:
+            self.back(errors[0])
+        else:
+            try:
+                self.save()
+                self.close()
+            except Exception, e:
+                self.back(0)
+
+    def verify(self):
+        return None
+
+    def save(self):
+        try:
+            # save all data to db - completeness checking is done in model
+            # verification methods
+            for part in self._partlist:
+                assert part.part_type is not None
+
+                # known part, just assign new amount request of it
+                if int(part.count) > 0:
+                    new_part = model.Assignment()
+                    new_part.part_type = part.part_type
+                    new_part.item = self._item
+                    new_part.count = int(part.count)
+                    self.store.add(new_part)
+
+            self.store.commit()
+        except Exception:
+            self.store.rollback()
+            raise
+
 
 class AssignmentSelector(GenericSelector):
     MODEL = model.Assignment
     EDITOR = None
+
+    def __init__(self, a, store, item):
+        GenericSelector.__init__(self, a, store)
+        self._item = item
+
+    def _header(self):
+        w = urwid.Columns([
+            ("fixed", 15, urwid.Text(u"typ")),
+            ("fixed", 10, urwid.Text(u"pouzdro")),
+            urwid.Text(u"shrnutí"),
+            ("fixed", 15, urwid.Text(u"výrobce")),
+            ("fixed", 6, urwid.Text(u"přiř.")),
+            ("fixed", 6, urwid.Text(u"žádáno"))
+            ], 3)
+        return w
+
+    def _entry(self, s):
+        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
+        w = p(urwid.Columns([
+            ("fixed", 15, urwid.Text(unicode(s.part_type.name))),
+            ("fixed", 10, urwid.Text(unicode(s.part_type.footprint.name))),
+            urwid.Text(s.part_type.summary),
+            ("fixed", 15, urwid.Text(unicode(s.part_type.manufacturer))),
+            ("fixed", 6, urwid.Text(unicode(s.parts.find().sum(model.Part.count)))),
+            ("fixed", 6, urwid.Text(unicode(s.count)))
+            ], 3))
+        w = app.Selectable(w)
+        w._data = s
+        return w
+
+    @property
+    def conditions(self):
+        return [self.MODEL.item == self._item]
+
+    @property
+    def project(self):
+        return self._project
+
+    def add(self):
+        return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"item": self._item})
+
+    def edit(self, widget, id):
+        return None
+
+    def select(self, widget, id):
+        # todo select the part pile to get parts from
+        pass
 
 class ItemEditor(GenericEditor):
     MODEL = model.Item
@@ -94,7 +180,7 @@ class ItemSelector(GenericSelector):
         return self._project
 
     def select(self, widget, id):
-        return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"project": widget._data, "item": widget._data})
+        return AssignmentSelector(self.app, self.store, item = widget._data)
 
 class ProjectEditor(GenericEditor):
     MODEL = model.Project

@@ -60,7 +60,7 @@ class PartCreator(app.UIScreen):
                     part.part_type = new_part_type
 
                 # known part, just add new amount of it
-                if int(part.count) > 0:
+                if part.source and int(part.count) > 0:
                     new_history = model.History()
                     new_history.event = model.History.INCOMING
                     self.store.add(new_history)
@@ -222,19 +222,28 @@ class PartSelector(app.UIScreen):
         return urwid.Text(u"Not found")
 
     def _header(self, p):
-        return urwid.AttrWrap(urwid.Columns([
+        cols = [
             ("weight", 2, urwid.Text(p.search_name)),
-            urwid.Text(p.date or u"-dnes-"),
-            ("fixed", len(p.source.name), urwid.Text(p.source.name)),
-            ("fixed", 5, urwid.Text(u"cena:")),
-            self._a(urwid.IntEdit(u"", p.unitprice).bind(p, "unitprice")
-                    .reg(self._save)),
+            urwid.Text(p.date or u"-dnes-")
+            ]
+
+        if p.source:
+            cols.extend([
+                ("fixed", len(p.source.name), urwid.Text(p.source.name)),
+                ("fixed", 5, urwid.Text(u"cena:")),
+                self._a(urwid.IntEdit(u"", p.unitprice).bind(p, "unitprice")
+                        .reg(self._save))
+                ])
+
+        cols.extend([
             ("fixed", 6, urwid.Text(u"počet:")),
             self._a(urwid.IntEdit(u"", p.count).bind(p, "count")
                     .reg(self._save)),
             ("weight", 1, urwid.Text(u"[%d/%d]" %
                                      (self._current + 1, len(self._partlist))))
-            ], 1), "header")
+            ])
+
+        return urwid.AttrWrap(urwid.Columns(cols, 1), "header")
 
     def show(self, args=None):
 
@@ -326,7 +335,7 @@ class PartSelector(app.UIScreen):
         for w in self._save:
             w.save()
 
-        a = self._action(self.app, self.store, self._partlist, self, **self._action_kwargs)
+        a = self._action(self.app, self.store, self._partlist, back = self, **self._action_kwargs)
         self.app.switch_screen(a)
 
     def input(self, key):
@@ -335,7 +344,6 @@ class PartSelector(app.UIScreen):
                 w.save()
 
             w, id = self.walker.get_focus()
-            self.app.debug()
             self._partlist[self._current].part_type = w._data
             self.app.switch_screen(self, self._current)
             return None

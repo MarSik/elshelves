@@ -96,3 +96,4 @@ def main():
 
 if '__main__' == __name__ or urwid.web_display.is_web_request():
     main()
+
