@@ -88,7 +88,6 @@ class PartCreator(app.UIScreen):
                     self.store.add(source)
 
             self.store.commit()
-            self.close()
         except Exception:
             self.store.rollback()
             raise
@@ -167,7 +166,7 @@ class PartSelector(app.UIScreen):
         header = urwid.AttrWrap(urwid.Text(u"Nová součástka"), "header")
         line1 = urwid.Columns([
             ("fixed", 10, urwid.Text("Název")),
-            self._a(urwid.Edit(u"", p.name).bind(p, "name").reg(self._save)),
+            self._a(urwid.Edit(u"", p.name or p.search_name).bind(p, "name").reg(self._save)),
             ("fixed", 10, urwid.Text(u"footprint")),
             ("fixed", 10, self._a(urwid.Edit(u"", p.footprint).bind(p, "footprint").reg(self._save)))
             ], 3)
@@ -219,7 +218,7 @@ class PartSelector(app.UIScreen):
             ], 1), "header")
 
     def show(self, args = None):
-        
+       
         if args is None:
             args = 0
 
@@ -231,6 +230,16 @@ class PartSelector(app.UIScreen):
         
         existing_parts = [self._match_entry(part.part_type, p) for p in part.matches]
         if self._create_new:
+            #fill number of pins based on previous input (either from footprint db or from different part with the same footprint)
+            if not part.pins and part.footprint:
+                footprint = self.store.find(model.Footprint, model.Footprint.name.like(part.footprint, "$", False)).one()
+                if footprint:
+                    part.pins = footprint.pins
+                else:
+                    for p in self._partlist:
+                        if part.footprint.lower() == p.footprint.lower() and p.pins:
+                            part.pins = p.pins
+
             existing_parts.append(self._entry(part))
 
         if part.part_type and not part.part_type.id in part.matches:
@@ -279,9 +288,15 @@ class PartSelector(app.UIScreen):
         return self.body
 
     def next(self, signal, args = None):
+        for w in self._save:
+            w.save()
+
         self.app.switch_screen(self, self._current + 1)
 
     def prev(self, signal, args = None):
+        for w in self._save:
+            w.save()
+
         self.app.switch_screen(self, self._current - 1)
 
     def save(self, signal, args = None):

@@ -1,4 +1,4 @@
-from storm.locals import create_database, Desc, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float
+from storm.locals import create_database, Desc, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float, Or
 import os.path
 
 class Tag(Storm):
@@ -243,6 +243,7 @@ class Meta(Storm):
 def getStore(url, create = False):
     d = create_database(url)
     s = Store(d)
+
     if url.startswith("sqlite:"):
         s.execute("PRAGMA foreign_keys = ON;")
 
@@ -271,10 +272,10 @@ def fill_matches(store, data):
     if search_name:
         name_parts = search_name.split()
         for name_part in name_parts:
-            parts.append(list(store.find(PartType,
-                            PartType.name.like("%%%s%%" % name_part, True, False) or
-                            PartType.summary.like("%%%s%%" % name_part, True, False) or
-                            PartType.description.like("%%%s%%" % name_part, True, False))
+            parts.append(list(store.find(PartType, Or(
+                            PartType.name.like("%%%s%%" % name_part, "$", False),
+                            PartType.summary.like("%%%s%%" % name_part, "$", False),
+                            PartType.description.like("%%%s%%" % name_part, "$", False)))
                          .config(distinct = True)
                          .values(PartType.id)))
 
@@ -289,13 +290,13 @@ def fill_matches(store, data):
                      .values(PartSource.part_type_id)))
 
     if manufacturer:
-        parts.append(list(store.find(PartType, PartType.manufacturer.like("%%%s%%" % manufacturer, True, False))
+        parts.append(list(store.find(PartType, PartType.manufacturer.like("%%%s%%" % manufacturer, "$", False))
                      .config(distinct = True)
                      .values(PartType.id)))
 
     if footprint:
         parts.append(list(store.find((PartType, Footprint),
-                                Footprint.name.like("%%%s%%" % footprint, True, False),
+                                Footprint.name.like("%%%s%%" % footprint, "$", False),
                                 PartType.footprint_id == Footprint.id)
                      .config(distinct = True)
                      .values(PartType.id)))
@@ -312,3 +313,7 @@ def fill_matches(store, data):
     data.matches = res
 
     return data
+
+def debug(stream):
+    import storm.tracer
+    storm.tracer.debug(True, stream)
