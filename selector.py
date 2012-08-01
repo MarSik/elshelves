@@ -55,6 +55,13 @@ class GenericSelector(app.UIScreen):
     def __init__(self, a, store):
         app.UIScreen.__init__(self, a, store)
 
+    def _header(self):
+        w = urwid.Columns([
+            ("fixed", 15, urwid.Text(u"název")),
+            urwid.Text(u"shrnutí")
+            ], 3)
+        return w
+
     def _entry(self, s):
         p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
         w = p(urwid.Columns([
@@ -69,7 +76,7 @@ class GenericSelector(app.UIScreen):
         find_args = self.conditions
         if self.MODEL_ARGS:
             find_args.extend(self.MODEL_ARGS)
-        listbox_content = [self._entry(p) for p in self.store.find(self.MODEL, *find_args)]
+        listbox_content = [self._header()] + [self._entry(p) for p in self.store.find(self.MODEL, *find_args)]
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')

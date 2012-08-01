@@ -54,7 +54,7 @@ CREATE TABLE locations (
 
 CREATE TABLE history (
        id integer PRIMARY KEY autoincrement,
-       parent integer references history (id) on delete restrict on update cascade,
+       parent_id integer references history (id) on delete restrict on update cascade,
        time datetime not null default CURRENT_TIMESTAMP,
        event int,
        description varchar,
@@ -75,7 +75,7 @@ CREATE TABLE items (
        id integer PRIMARY KEY autoincrement,
        kit boolean default false,
        description varchar,
-       serial varchar,
+       serial varchar unique not null,
        project_id integer not null references projects (id) on delete restrict on update cascade,
        history_id integer references history (id) on delete restrict on update cascade
 );

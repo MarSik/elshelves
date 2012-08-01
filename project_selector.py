@@ -9,6 +9,10 @@ from part_selector import SearchForParts
 class ItemAssigner(app.UIScreen):
     pass
 
+class AssignmentSelector(GenericSelector):
+    MODEL = model.Assignment
+    EDITOR = None
+
 class ItemEditor(GenericEditor):
     MODEL = model.Item
 
@@ -19,6 +23,8 @@ class ItemEditor(GenericEditor):
             item.serial = u""
             item.description = u""
             item.project = caller.project
+            item.history = History()
+            item.history.event = History.NEW
 
         GenericEditor.__init__(self, a, store, item)
 
@@ -46,17 +52,34 @@ class ItemSelector(GenericSelector):
         GenericSelector.__init__(self, a, store)
         self._project = project
 
+    def _header(self):
+        w = urwid.Columns([
+            ("fixed", 5, urwid.Text(u"id")),
+            ("fixed", 20, urwid.Text(u"sériové číslo")),
+            urwid.Text(u"forma"),
+            ("fixed", 20, urwid.Text(u"změněno")),
+            ("fixed", 20, urwid.Text(u"vytvořeno"))
+            ], 3)
+        return w
+
     def _entry(self, s):
         p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
 
         if s.kit:
             kit = u"kit"
         else:
-            kit = u"assembled"
+            kit = u""
+
+        oldest = s.history
+        while oldest.parent:
+            oldest = oldest.parent
 
         w = p(urwid.Columns([
-            ("fixed", 15, urwid.Text(unicode(s.serial))),
+            ("fixed", 5, urwid.Text(unicode(s.id))),
+            ("fixed", 20, urwid.Text(unicode(s.serial))),
             urwid.Text(kit),
+            ("fixed", 20, urwid.Text(unicode(s.history.time))),
+            ("fixed", 20, urwid.Text(unicode(oldest.time)))
             ], 3))
         w = app.Selectable(w)
         w._data = s

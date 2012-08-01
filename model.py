@@ -155,15 +155,17 @@ class History(Storm):
     __storm_table__ = "history"
 
     INCOMING = 0
-    MOVED = 1
-    UPDATED = 2
-    USED = 3
-    DESTROYED = 4
-    TESTED = 5
-    SHIPPED = 6
+    NEW = 1
+    MOVED = 2
+    UPDATED = 3
+    USED = 4
+    DESTROYED = 5
+    TESTED = 6
+    SHIPPED = 7
 
     id = Int(primary=True)
-    parent = Reference(id, "History.id")
+    parent_id = Int()
+    parent = Reference(parent_id, "History.id")
     time = DateTime()
     event = Int()
     description = Unicode()
