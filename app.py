@@ -225,9 +225,23 @@ def intsave(self):
     (obj, attr) = self._bind
     setattr(obj, attr, self.value())
 
+def checksave(self):
+    """Save the value to the binded data object."""
+    assert hasattr(self, "_bind") and self._bind
+    (obj, attr) = self._bind
+    setattr(obj, attr, self.get_state())
+
+
 urwid.Edit.bind = bind
 urwid.Edit.bind_live = bind_live
 urwid.Edit._bind_live_cb = _bind_live_cb
 urwid.Edit.reg = reg
 urwid.Edit.save = save
+
 urwid.IntEdit.save = intsave
+
+urwid.CheckBox.bind = bind
+urwid.CheckBox.bind_live = bind_live
+urwid.CheckBox._bind_live_cb = _bind_live_cb
+urwid.CheckBox.reg = reg
+urwid.CheckBox.save = checksave

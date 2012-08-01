@@ -187,6 +187,40 @@ class Part(Storm):
     history_id = Int()
     history = Reference(history_id, History.id)
 
+    def take(self, count):
+        """Take some amount of parts from this pile and return the object
+        representing this amount. Everything gets copied over."""
+
+        assert count > 0
+        assert count <= self.count
+
+        if count == self.count:
+            return self
+
+        take = Part()
+        take.count = count
+        self.count -= count
+
+        take.source = self.source
+        take.date = self.date
+        take.price = self.price
+        take.part_type = self.part_type
+        take.assignment = self.assignment
+        take.history = self.history
+        Store.of(self).add(take)
+
+        return take
+
+    def record_history(self, history):
+        """Add record to the history attribute
+
+        :param history: history object describing action
+        :type history: instance of History class
+        """
+        history.parent = self.history
+        self.history = history
+        return self
+
     def __str__(self):
         return "<Part id:%d type:%s count:%d manufacturer:%s>" % (self.id,
                                                                   self.part_type.name,
@@ -227,10 +261,31 @@ class Assignment(Storm):
 
     id = Int(primary=True)
     part_type_id = Int()
+    part_type = Reference(part_type_id, PartType.id)
     parts = ReferenceSet(id, Part.assignment_id)
     item_id = Int()
     item = Reference(item_id, Item.id)
     count = Int()
+
+    def assign(self, part_pile):
+        """Takes a pile of parts (one Part row) and assigns it to this slot. If there is more in the pile, it gets splitted.
+
+        :param part_pile: one Part object containing pile of parts to assign
+        :type part_pile: instance of Part
+        """
+
+        assert self.part_type == part_pile.part_type
+
+        # how many can we actually assign
+        count = min(part_pile.count, self.count - self.parts.sum(Part.count))
+        assert count >= 0
+
+        # there are enough parts, first remove some
+        if count == 0:
+            return
+
+        pile = part_pile.take(count)
+        pile.assignment = self
 
 class Meta(Storm):
     """Model for many to many relationship between Source and PartType"""
@@ -255,7 +310,7 @@ def getStore(url, create = False):
         version = Meta()
         version.key = u"created"
         s.add(version)
-        
+
         s.commit()
 
     return s
@@ -300,6 +355,16 @@ def fill_matches(store, data):
                                 PartType.footprint_id == Footprint.id)
                      .config(distinct = True)
                      .values(PartType.id)))
+
+    if hasattr(data, "item"):
+        parts.append(list(
+            store.find(Assignment, Assignment.item == data.item)
+            .config(distinct = True).values(Assignment.part_type_id)))
+
+    if hasattr(data, "project"):
+        parts.append(list(
+            store.find((Assignment, Item), Assignment.item == Item.id, Item.project == data.project)
+            .config(distinct = True).values(Assignment.part_type_id)))
 
     # create a set containing all part types which matched all queries
     if parts:

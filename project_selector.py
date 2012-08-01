@@ -3,32 +3,32 @@
 import app
 import urwid
 import model
-from selector import ItemSelector
+from selector import GenericSelector, GenericEditor
 from part_selector import SearchForParts
 
 class ItemAssigner(app.UIScreen):
-    def __init__(self, a, store):
-        app.UIScreen.__init__(self, a, store)
+    pass
 
-class ProjectEditor(app.UIScreen):
-    def __init__(self, a, store, source = None):
-        app.UIScreen.__init__(self, a, store)
-        if source is None:
-            source = model.Project(
-                name = u"",
-                summary = u"",
-                description = u""
-                )
-        self._source = source
-        self._save = app.SaveRegistry()
+class ItemEditor(GenericEditor):
+    MODEL = model.Item
+
+    def __init__(self, a, store, item = None, caller = None):
+        if item is None:
+            item = self.MODEL()
+            item.kit = False
+            item.serial = u""
+            item.description = u""
+            item.project = caller.project
+
+        GenericEditor.__init__(self, a, store, item)
 
     def show(self, args = None):
         self._save.clear()
         listbox_content = [
-            urwid.Edit(u"Název", self._source.name or u"").bind(self._source, "name").reg(self._save),
-            urwid.Edit(u"Krátký popis", self._source.summary or u"").bind(self._source, "summary").reg(self._save),
+            urwid.Edit(u"Sériové č.", self._item.serial or u"").bind(self._item, "serial").reg(self._save),
+            urwid.CheckBox(u"Kit", self._item.kit or False).bind(self._item, "kit").reg(self._save),
             urwid.Text(u"Popis"),
-            urwid.Edit(u"", self._source.description or u"", multiline=True).bind(self._source, "description").reg(self._save),
+            urwid.Edit(u"", self._item.description or u"", multiline=True).bind(self._item, "description").reg(self._save),
             urwid.Divider(u" "),
             urwid.Button(u"Uložit", self.save)
             ]
@@ -38,18 +38,47 @@ class ProjectEditor(app.UIScreen):
 
         return self.body
 
-    def save(self, signal, args = None):
-        for w in self._save:
-            w.save()
+class ItemSelector(GenericSelector):
+    EDITOR = ItemEditor
+    MODEL = model.Item
 
-        if self.store.of(self._source) is None:
-            self.store.add(self._source)
-        self.store.commit()
-        self.close()
+    def __init__(self, a, store, project):
+        GenericSelector.__init__(self, a, store)
+        self._project = project
 
-class ProjectSelector(ItemSelector):
+    def _entry(self, s):
+        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
+
+        if s.kit:
+            kit = u"kit"
+        else:
+            kit = u"assembled"
+
+        w = p(urwid.Columns([
+            ("fixed", 15, urwid.Text(unicode(s.serial))),
+            urwid.Text(kit),
+            ], 3))
+        w = app.Selectable(w)
+        w._data = s
+        return w
+
+    @property
+    def conditions(self):
+        return [self.MODEL.project == self._project]
+
+    @property
+    def project(self):
+        return self._project
+
+    def select(self, widget, id):
+        return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"project": widget._data, "item": widget._data})
+
+class ProjectEditor(GenericEditor):
+    MODEL = model.Project
+
+class ProjectSelector(GenericSelector):
     EDITOR = ProjectEditor
     MODEL = model.Project
 
     def select(self, widget, id):
-        return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"project": widget._data})
+        return ItemSelector(self.app, self.store, project = widget._data)

@@ -4,17 +4,18 @@ import urwid
 import app
 import model
 
+
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
 
 class PartCreator(app.UIScreen):
-    def __init__(self, a, store, partlist, back = None):
+    def __init__(self, a, store, partlist, back=None):
         app.UIScreen.__init__(self, a, store, back)
         self._partlist = partlist
 
-    def show(self, args = None):
+    def show(self, args=None):
         # run all model pre-check verifiers
         errors = self.verify()
         if errors:
@@ -38,7 +39,8 @@ class PartCreator(app.UIScreen):
                     # unknown part create part type and all dependencies
 
                     # get or create footprint
-                    footprint = self.store.find(model.Footprint, name = part.footprint).one()
+                    footprint = self.store.find(model.Footprint,
+                                                name=part.footprint).one()
                     if footprint is None:
                         footprint = model.Footprint()
                         footprint.name = part.footprint
@@ -73,7 +75,8 @@ class PartCreator(app.UIScreen):
                     new_part.history = new_history
                     self.store.add(new_part)
 
-                # check if we have ever bought it from this source (with this sku if it was entered)
+                # check if we have ever bought it from this source (with this
+                # sku if it was entered)
                 sources = part.part_type.sources.find(model.PartSource.source == part.source)
                 if part.sku:
                     sources = filter(lambda s: s.sku == part.sku, sources)
@@ -94,7 +97,8 @@ class PartCreator(app.UIScreen):
 
 
 class PartSelector(app.UIScreen):
-    def __init__(self, a, store, partlist, action, action_kwargs = {}, back = None, create_new = True):
+    def __init__(self, a, store, partlist, action, action_kwargs={},
+                 back=None, create_new=True):
         app.UIScreen.__init__(self, a, store, back)
         self._partlist = [model.fill_matches(self.store, w) for w in partlist]
         self._save = app.SaveRegistry()
@@ -104,10 +108,14 @@ class PartSelector(app.UIScreen):
         self._action = action
         self._action_kwargs = action_kwargs
 
-        self._h = lambda w: urwid.AttrMap(w, {"header": "part header", "constfc": "editbx"}, {"header": "part header focus", "constfc": "constfc", "editbx": "editbx_f", "editfc": "editfc_f"})
+        self._h = lambda w: urwid.AttrMap(w,
+                                          {"header": "part header", "constfc": "editbx"},
+                                          {"header": "part header focus",
+                                           "constfc": "constfc",
+                                           "editbx": "editbx_f",
+                                           "editfc": "editfc_f"})
         self._a = lambda w: urwid.AttrWrap(w, "editbx", "editfc")
         self._c = lambda w: urwid.AttrWrap(w, "constfc")
-
 
     def _match_entry(self, selected_part_type, p_id):
         p = self.store.get(model.PartType, p_id)
@@ -166,28 +174,36 @@ class PartSelector(app.UIScreen):
         header = urwid.AttrWrap(urwid.Text(u"Nová součástka"), "header")
         line1 = urwid.Columns([
             ("fixed", 10, urwid.Text("Název")),
-            self._a(urwid.Edit(u"", p.name or p.search_name).bind(p, "name").reg(self._save)),
+            self._a(urwid.Edit(u"", p.name or p.search_name)
+                    .bind(p, "name").reg(self._save)),
             ("fixed", 10, urwid.Text(u"footprint")),
-            ("fixed", 10, self._a(urwid.Edit(u"", p.footprint).bind(p, "footprint").reg(self._save)))
+            ("fixed", 10, self._a(urwid.Edit(u"", p.footprint)
+                                  .bind(p, "footprint").reg(self._save)))
             ], 3)
         line2 = urwid.Columns([
             ("fixed", 10, urwid.Text("Shrnutí")),
-            self._a(urwid.Edit(u"", p.summary).bind(p, "summary").reg(self._save)),
+            self._a(urwid.Edit(u"", p.summary).bind(p, "summary")
+                    .reg(self._save)),
             ("fixed", 10, urwid.Text(u"pinů")),
-            ("fixed", 10, self._a(urwid.IntEdit(u"", unicode(p.pins)).bind(p, "pins").reg(self._save)))
+            ("fixed", 10, self._a(urwid.IntEdit(u"", unicode(p.pins))
+                                  .bind(p, "pins").reg(self._save)))
             ], 3)
         line3 = urwid.Columns([
             ("fixed", 10, urwid.Text("Výrobce")),
-            self._a(urwid.Edit(u"", p.manufacturer).bind(p, "manufacturer").reg(self._save)),
+            self._a(urwid.Edit(u"", p.manufacturer).bind(p, "manufacturer")
+                    .reg(self._save)),
             ("fixed", 10, urwid.Text(u"sku")),
-            ("fixed", 10, self._a(urwid.Edit(u"", p.sku).bind(p, "sku").reg(self._save)))
+            ("fixed", 10, self._a(urwid.Edit(u"", p.sku).bind(p, "sku")
+                                  .reg(self._save)))
             ], 3)
         line4 = urwid.Columns([
             ("fixed", 10, urwid.Text("Datasheet")),
-            self._a(urwid.Edit(u"", p.datasheet).bind(p, "datasheet").reg(self._save)),
+            self._a(urwid.Edit(u"", p.datasheet).bind(p, "datasheet")
+                    .reg(self._save)),
             ], 3)
         desc_title = urwid.Text(u"Popis")
-        desc = self._a(urwid.Edit(u"", p.description, multiline = True).bind(p, "description").reg(self._save))
+        desc = self._a(urwid.Edit(u"", p.description, multiline=True)
+                       .bind(p, "description").reg(self._save))
 
         pile = urwid.Pile([
             header,
@@ -211,14 +227,17 @@ class PartSelector(app.UIScreen):
             urwid.Text(p.date or u"-dnes-"),
             ("fixed", len(p.source.name), urwid.Text(p.source.name)),
             ("fixed", 5, urwid.Text(u"cena:")),
-            self._a(urwid.IntEdit(u"", p.unitprice).bind(p, "unitprice").reg(self._save)),
+            self._a(urwid.IntEdit(u"", p.unitprice).bind(p, "unitprice")
+                    .reg(self._save)),
             ("fixed", 6, urwid.Text(u"počet:")),
-            self._a(urwid.IntEdit(u"", p.count).bind(p, "count").reg(self._save)),
-            ("weight", 1, urwid.Text(u"[%d/%d]" % (self._current + 1, len(self._partlist))))
+            self._a(urwid.IntEdit(u"", p.count).bind(p, "count")
+                    .reg(self._save)),
+            ("weight", 1, urwid.Text(u"[%d/%d]" %
+                                     (self._current + 1, len(self._partlist))))
             ], 1), "header")
 
-    def show(self, args = None):
-       
+    def show(self, args=None):
+
         if args is None:
             args = 0
 
@@ -227,12 +246,16 @@ class PartSelector(app.UIScreen):
         self._save.clear()
         part = self._partlist[args]
         listbox_content = []
-        
-        existing_parts = [self._match_entry(part.part_type, p) for p in part.matches]
+
+        existing_parts = [self._match_entry(part.part_type, p)
+                          for p in part.matches]
         if self._create_new:
-            #fill number of pins based on previous input (either from footprint db or from different part with the same footprint)
+            # fill number of pins based on previous input (either from footprint
+            # db or from different part with the same footprint)
             if not part.pins and part.footprint:
-                footprint = self.store.find(model.Footprint, model.Footprint.name.like(part.footprint, "$", False)).one()
+                footprint = self.store.find(model.Footprint,
+                                            model.Footprint.name
+                                            .like(part.footprint, "$", False)).one()
                 if footprint:
                     part.pins = footprint.pins
                 else:
@@ -244,7 +267,7 @@ class PartSelector(app.UIScreen):
 
         if part.part_type and not part.part_type.id in part.matches:
             part.part_type = None
-            
+
         if part.part_type is None and len(existing_parts) == 1:
             part.part_type = existing_parts[0]._data
 
@@ -280,26 +303,26 @@ class PartSelector(app.UIScreen):
                 return h
             listbox_content.extend([self._spacer, urwid.Text(u"Další možnosti:"), urwid.Divider(u"="), self._spacer])
             listbox_content.extend([_hdata(p) for p in existing_parts if p._data != part.part_type])
-        
+
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
 
         return self.body
 
-    def next(self, signal, args = None):
+    def next(self, signal, args=None):
         for w in self._save:
             w.save()
 
         self.app.switch_screen(self, self._current + 1)
 
-    def prev(self, signal, args = None):
+    def prev(self, signal, args=None):
         for w in self._save:
             w.save()
 
         self.app.switch_screen(self, self._current - 1)
 
-    def save(self, signal, args = None):
+    def save(self, signal, args=None):
         for w in self._save:
             w.save()
 
@@ -319,14 +342,17 @@ class PartSelector(app.UIScreen):
         else:
             return key
 
+
 class SearchForParts(app.UIScreen):
-    def __init__(self, a, store, source = None, date = None, back = None, action = None, action_kwargs = {}, selector = PartSelector):
+    def __init__(self, a, store, source=None, date=None, back=None, action=None,
+                 action_kwargs={}, selector=PartSelector, extra=None):
         app.UIScreen.__init__(self, a, store, back)
         self._date = None
         self._save = app.SaveRegistry()
         self._action = action
         self._action_kwargs = action_kwargs
         self._selector = selector
+        self._extra = extra
 
         self._source = source
 
@@ -367,6 +393,9 @@ class SearchForParts(app.UIScreen):
             "matches": []
             }
 
+        if self._extra:
+            p.update(self._extra)
+
         return Struct(**p)
 
     def _entry(self, s):
@@ -382,13 +411,13 @@ class SearchForParts(app.UIScreen):
         w._data = s
         return w
 
-    def show(self, args = None):
+    def show(self, args=None):
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
 
         return self.body
 
-    def add(self, signal, args = None):
+    def add(self, signal, args=None):
         p = self._newpart()
 
         buttons = self.walker.pop()
@@ -401,13 +430,14 @@ class SearchForParts(app.UIScreen):
         if id != 0 and id < len(list) - 1:
             del list[id]
 
-    def save(self, signal, args = None):
+    def save(self, signal, args=None):
         # save all values from widgets to storage
         for w in self._save:
             w.save()
 
-        w = self._selector(self.app, self.store, self.parts, back = self, action = self._action,
-                           action_kwargs = self._action_kwargs)
+        w = self._selector(self.app, self.store, self.parts,
+                           back=self, action=self._action,
+                           action_kwargs=self._action_kwargs)
         self.app.switch_screen(w)
 
     def input(self, key):
