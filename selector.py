@@ -3,9 +3,15 @@
 import model
 import urwid
 import app
+from app import Edit, IntEdit, CheckBox, Button
 
 class GenericEditor(app.UIScreen):
     MODEL = model.Project
+    FIELDS = [
+        (_(u"Name: "), "name", Edit, {}, u""),
+        (_(u"Summary: "), "summary", Edit, {}, u""),
+        (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
+        ]
 
     def __init__(self, a, store, item = None, caller = None):
         app.UIScreen.__init__(self, a, store)
@@ -21,13 +27,25 @@ class GenericEditor(app.UIScreen):
 
     def show(self, args = None):
         self._save.clear()
-        listbox_content = [
-            urwid.Edit(u"Název: ", self._item.name or u"").bind(self._item, "name").reg(self._save),
-            urwid.Edit(u"Krátký popis: ", self._item.summary or u"").bind(self._item, "summary").reg(self._save),
-            urwid.Text(u"Popis: "),
-            urwid.Edit(u"", self._item.description or u"", multiline=True).bind(self._item, "description").reg(self._save),
+        listbox_content = []
+
+        maxlen = max([len(f[0]) for f in self.FIELDS if not "multiline" in f[3]])
+
+        for title, attr, edit, args, default in self.FIELDS:
+            if "multiline" in args:
+                listbox_content.extend([
+                    urwid.Text(title),
+                    edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save)
+                    ])
+            else:
+                listbox_content.append(urwid.Columns([
+                    ("fixed", maxlen, urwid.Text(title)),
+                    edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save)
+                    ], 3))
+
+        listbox_content += [
             urwid.Divider(u" "),
-            urwid.Button(u"Uložit", self.save)
+            Button(_(u"Save"), self.save)
             ]
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
@@ -47,23 +65,26 @@ class GenericEditor(app.UIScreen):
 class GenericBrowser(app.UIScreen):
     MODEL = None
     MODEL_ARGS = []
+    FIELDS = [
+        (_(u"name"), "weight", 1, "name"),
+        (_(u"summary"), "weight", 3, "summary")
+        ]
 
     def __init__(self, a, store):
         app.UIScreen.__init__(self, a, store)
 
     def _header(self):
-        w = urwid.Columns([
-            ("fixed", 15, urwid.Text(u"název")),
-            urwid.Text(u"shrnutí")
-            ], 3)
+        w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
         return w
 
     def _entry(self, s):
-        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
-        w = p(urwid.Columns([
-            ("fixed", 15, urwid.Text(unicode(s.name))),
-            urwid.Text(unicode(s.summary)),
-            ], 3))
+        def _val(s, name):
+            for p in name.split("."):
+                s = getattr(s, p)
+            return s
+
+        p = lambda w: urwid.AttrMap(w, "body", "list_f")
+        w = p(urwid.Columns([(f[1], f[2], urwid.Text(unicode(_val(s, f[3])))) for f in self.FIELDS], 3))
         w = app.Selectable(w)
         w._data = s
         return w

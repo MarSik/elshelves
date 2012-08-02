@@ -5,21 +5,29 @@ import weakref
 
 class App(object):
     palette = [
-        ('body','black','light gray', 'standout'),
-        ('reverse','light gray','black'),
+        # base screen color and its selection inverted variant
+        ('body','white','dark cyan', 'standout'),
+
+        # header and footer color
         ('header','white','dark red', 'bold'),
-        ('part header', 'light gray', 'black'),
-        ('part header focus', 'black', 'white', 'standout'),
-        ('important','dark blue','light gray',('standout','underline')),
-        ('editfc','black', 'white', 'bold'),
-        ('constfc','light gray', 'black', 'bold'),
-        ('editbx','black', 'white'),
-        ('editfc_f','white', 'dark blue', 'bold'),
-        ('editbx_f','light gray', 'dark blue'),
-        ('editcp','black','light gray', 'standout'),
-        ('bright','dark gray','light gray', ('bold','standout')),
-        ('buttn','black','dark cyan'),
-        ('buttnf','white','dark blue','bold'),
+        ('footer','white','dark red', 'bold'),
+
+        # edit field
+        ('edit','black', 'light blue'), # inactive
+        ('edit_f','white', 'dark blue'), # focused
+        ('edit_c','black','light gray', 'standout'), # read only
+        ('edit_fc','black', 'white', 'bold'), # read only focus
+
+        # selected item in browser
+        ('list_f','light gray', 'dark blue'), # focused
+
+        # part header
+        ('part_f', 'black', 'white', "standout"),
+        ('part', 'black', 'light gray'),
+
+        # button
+        ('button','dark blue','white'),
+        ('button_f','white','black','bold'),
         ]
 
     screen = None
@@ -84,6 +92,9 @@ class App(object):
         body = screen.show(args)
         # TODO call screen.title
         if body:
+            body = urwid.AttrMap(body, {"default": "body",
+                                        None: "body",
+                                        "": "body"})
             self._frame.set_body(body)
 
         if newloop == True:
@@ -245,3 +256,15 @@ urwid.CheckBox.bind_live = bind_live
 urwid.CheckBox._bind_live_cb = _bind_live_cb
 urwid.CheckBox.reg = reg
 urwid.CheckBox.save = checksave
+
+def Button(content, *args, **kwargs):
+    return urwid.AttrWrap(urwid.Button(content, *args, **kwargs), "button", "button_f")
+
+def Edit(label, content, *args, **kwargs):
+    return urwid.AttrWrap(urwid.Edit(label, content, *args, **kwargs), "edit", "edit_f")
+
+def IntEdit(label, content, *args, **kwargs):
+    return urwid.AttrWrap(urwid.IntEdit(label, content, *args, **kwargs), "edit", "edit_f")
+
+def CheckBox(label, content, *args, **kwargs):
+    return urwid.AttrWrap(urwid.CheckBox(label, content, *args, **kwargs), "edit", "edit_f")

@@ -4,6 +4,9 @@
 __version__ = "0.0.0"
 __author__ = "Martin Sivak <mars@montik.net>"
 
+import gettext
+gettext.install('elshelves', unicode=1)
+
 import urwid
 import urwid.raw_display
 import urwid.web_display
@@ -15,20 +18,17 @@ from part_selector import SearchForParts, PartSelector, PartCreator
 from selector import GenericSelector, GenericEditor
 from project_selector import ProjectSelector
 from browser import Browser
-
-def e(w):
-    return urwid.AttrWrap(w, "editbx", "editfc")
-
+from app import Edit, IntEdit, CheckBox, Button
 
 class Actions(app.UIScreen):
     def show(self, args=None):
         content = [
-            urwid.Button(u"Příjem", self._switch_screen, SourceSelector),
-            urwid.Button(u"Projekt", self._switch_screen, ProjectSelector),
-            urwid.Button(u"Sklad", self._switch_screen, Browser)
+            Button(_(u"Add parts"), self._switch_screen, SourceSelector),
+            Button(_(u"Use parts"), self._switch_screen, ProjectSelector),
+            Button(_(u"Browse parts"), self._switch_screen, Browser)
             ]
 
-        self.body = urwid.GridFlow(content, 13, 3, 1, "left")
+        self.body = urwid.GridFlow(content, 20, 3, 1, "left")
         return urwid.Filler(self.body)
 
     def _switch_screen(self, signal, screen):
@@ -38,8 +38,14 @@ class Actions(app.UIScreen):
 
 class SourceEditor(GenericEditor):
     MODEL = model.Source
+    FIELDS = [
+        (_(u"Name: "), "name", Edit, {}, u""),
+        (_(u"Homepage: "), "home", Edit, {}, u""),
+        (_(u"Summary: "), "summary", Edit, {}, u""),
+        (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
+        ]
 
-    def __init__(self, a, store, source=None):
+    def __init__(self, a, store, source=None, caller = None):
         if source is None:
             source = model.Source(
                 name=u"",
@@ -49,28 +55,7 @@ class SourceEditor(GenericEditor):
                 url=u"http://.../%s"
                 )
 
-        GenericEditor.__init__(self, a, store, source)
-
-    def show(self, args=None):
-        self._save.clear()
-        listbox_content = [
-            urwid.Edit(u"Název", self._item.name or u"")
-                 .bind(self._item, "name").reg(self._save),
-            urwid.Edit(u"Homepage", self._item.home or u"")
-                 .bind(self._item, "home").reg(self._save),
-            urwid.Edit(u"Krátký popis", self._item.summary or u"")
-                 .bind(self._item, "summary").reg(self._save),
-            urwid.Text(u"Popis"),
-            urwid.Edit(u"", self._item.description or u"", multiline=True)
-                 .bind(self._item, "description").reg(self._save),
-            urwid.Divider(u" "),
-            urwid.Button(u"Uložit", self.save)
-            ]
-        self.walker = urwid.SimpleListWalker(listbox_content)
-        listbox = urwid.ListBox(self.walker)
-        self.body = urwid.AttrWrap(listbox, 'body')
-
-        return self.body
+        GenericEditor.__init__(self, a, store, source, caller)
 
 
 class SourceSelector(GenericSelector):
@@ -97,4 +82,3 @@ def main():
 
 if '__main__' == __name__ or urwid.web_display.is_web_request():
     main()
-

@@ -6,6 +6,7 @@ import model
 from selector import GenericSelector, GenericEditor
 from part_selector import SearchForParts
 from browser import PartBrowser
+from app import Edit, IntEdit, CheckBox, Button
 
 class AssignmentPartSelector(PartBrowser):
     pass
@@ -60,35 +61,18 @@ class ItemAssigner(app.UIScreen):
 class AssignmentSelector(GenericSelector):
     MODEL = model.Assignment
     EDITOR = None
+    FIELDS = [
+        (_(u"type"), "fixed", 15, "part_type.name"),
+        (_(u"footprint"), "fixed", 10, "part_type.footprint.name"),
+        (_(u"summary"), "weight", 1, "part_type.summary"),
+        (_(u"manufacturer"), "fixed", 15, "part_type.manufacturer"),
+        (_(u"count"), "fixed", 6, "count_assigned"),
+        (_(u"required"), "fixed", 6, "count")
+        ]
 
     def __init__(self, a, store, item):
         GenericSelector.__init__(self, a, store)
         self._item = item
-
-    def _header(self):
-        w = urwid.Columns([
-            ("fixed", 15, urwid.Text(u"typ")),
-            ("fixed", 10, urwid.Text(u"pouzdro")),
-            urwid.Text(u"shrnutí"),
-            ("fixed", 15, urwid.Text(u"výrobce")),
-            ("fixed", 6, urwid.Text(u"přiř.")),
-            ("fixed", 6, urwid.Text(u"žádáno"))
-            ], 3)
-        return w
-
-    def _entry(self, s):
-        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
-        w = p(urwid.Columns([
-            ("fixed", 15, urwid.Text(unicode(s.part_type.name))),
-            ("fixed", 10, urwid.Text(unicode(s.part_type.footprint.name))),
-            urwid.Text(s.part_type.summary),
-            ("fixed", 15, urwid.Text(unicode(s.part_type.manufacturer))),
-            ("fixed", 6, urwid.Text(unicode(s.parts.find().sum(model.Part.count)))),
-            ("fixed", 6, urwid.Text(unicode(s.count)))
-            ], 3))
-        w = app.Selectable(w)
-        w._data = s
-        return w
 
     @property
     def conditions(self):
@@ -106,6 +90,11 @@ class AssignmentSelector(GenericSelector):
 
 class ItemEditor(GenericEditor):
     MODEL = model.Item
+    FIELDS = [
+        (_(u"Serial no: "), "serial", Edit, {}, u""),
+        (_(u"Kit: "), "kit", CheckBox, {}, False),
+        (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
+        ]
 
     def __init__(self, a, store, item = None, caller = None):
         if item is None:
@@ -119,62 +108,20 @@ class ItemEditor(GenericEditor):
 
         GenericEditor.__init__(self, a, store, item)
 
-    def show(self, args = None):
-        self._save.clear()
-        listbox_content = [
-            urwid.Edit(u"Sériové č.", self._item.serial or u"").bind(self._item, "serial").reg(self._save),
-            urwid.CheckBox(u"Kit", self._item.kit or False).bind(self._item, "kit").reg(self._save),
-            urwid.Text(u"Popis"),
-            urwid.Edit(u"", self._item.description or u"", multiline=True).bind(self._item, "description").reg(self._save),
-            urwid.Divider(u" "),
-            urwid.Button(u"Uložit", self.save)
-            ]
-        self.walker = urwid.SimpleListWalker(listbox_content)
-        listbox = urwid.ListBox(self.walker)
-        self.body = urwid.AttrWrap(listbox, 'body')
-
-        return self.body
-
 class ItemSelector(GenericSelector):
     EDITOR = ItemEditor
     MODEL = model.Item
+    FIELDS = [
+        (_(u"id"), "fixed", 5, "id"),
+        (_(u"serial no."), "fixed", 20, "serial"),
+        (_(u"kit"), "weight", 1, "kit"),
+        (_(u"changed"), "fixed", 20, "history.time"),
+        (_(u"added"), "fixed", 20, "history.beginning.time")
+        ]
 
     def __init__(self, a, store, project):
         GenericSelector.__init__(self, a, store)
         self._project = project
-
-    def _header(self):
-        w = urwid.Columns([
-            ("fixed", 5, urwid.Text(u"id")),
-            ("fixed", 20, urwid.Text(u"sériové číslo")),
-            urwid.Text(u"forma"),
-            ("fixed", 20, urwid.Text(u"změněno")),
-            ("fixed", 20, urwid.Text(u"vytvořeno"))
-            ], 3)
-        return w
-
-    def _entry(self, s):
-        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
-
-        if s.kit:
-            kit = u"kit"
-        else:
-            kit = u""
-
-        oldest = s.history
-        while oldest.parent:
-            oldest = oldest.parent
-
-        w = p(urwid.Columns([
-            ("fixed", 5, urwid.Text(unicode(s.id))),
-            ("fixed", 20, urwid.Text(unicode(s.serial))),
-            urwid.Text(kit),
-            ("fixed", 20, urwid.Text(unicode(s.history.time))),
-            ("fixed", 20, urwid.Text(unicode(oldest.time)))
-            ], 3))
-        w = app.Selectable(w)
-        w._data = s
-        return w
 
     @property
     def conditions(self):
@@ -196,4 +143,3 @@ class ProjectSelector(GenericSelector):
 
     def select(self, widget, id):
         return ItemSelector(self.app, self.store, project = widget._data)
-

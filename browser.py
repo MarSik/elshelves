@@ -15,15 +15,15 @@ class HistoryBrowser(GenericBrowser):
 
     def _header(self):
         w = urwid.Columns([
-            ("fixed", 20, urwid.Text(u"čas")),
-            ("fixed", 2, urwid.Text(u"událost")),
-            ("fixed", 20, urwid.Text(u"umístění")),
+            ("fixed", 20, urwid.Text(_(u"time"))),
+            ("fixed", 2, urwid.Text(_(u"event"))),
+            ("fixed", 20, urwid.Text(_(u"location"))),
             urwid.Text(u"popis")
             ], 2)
         return w
 
     def _entry(self, s):
-        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
+        p = lambda w: urwid.AttrMap(w, "body", "list_f")
         w = p(urwid.Columns([
             ("fixed", 20, urwid.Text(unicode(s.time))),
             ("fixed", 2, urwid.Text(unicode(s.event))),
@@ -49,15 +49,15 @@ class PartBrowser(GenericBrowser):
 
     def _header(self):
         w = urwid.Columns([
-            ("fixed", 10, urwid.Text(u"datum")),
+            ("fixed", 10, urwid.Text(_(u"date"))),
             urwid.Text(u"zdroj"),
-            ("fixed", 15, urwid.Text(u"cena")),
-            ("fixed", 6, urwid.Text(u"počet"))
+            ("fixed", 15, urwid.Text(_(u"price"))),
+            ("fixed", 6, urwid.Text(_(u"count")))
             ], 3)
         return w
 
     def _entry(self, s):
-        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
+        p = lambda w: urwid.AttrMap(w, "body", "list_f")
         w = p(urwid.Columns([
             ("fixed", 10, urwid.Text(unicode(s.date))),
             urwid.Text(s.source.name),
@@ -87,17 +87,17 @@ class Browser(GenericBrowser):
 
     def _header(self):
         w = urwid.Columns([
-            ("fixed", 15, urwid.Text(u"název")),
-            urwid.Text(u"shrnutí"),
-            urwid.Text(u"výrobce"),
-            ("fixed", 6, urwid.Text(u"pinů")),
-            ("fixed", 10, urwid.Text(u"pouzdro")),
-            ("fixed", 6, urwid.Text(u"počet"))
+            ("fixed", 15, urwid.Text(_(u"name"))),
+            urwid.Text(_(u"summary")),
+            urwid.Text(_(u"manufacturer")),
+            ("fixed", 6, urwid.Text(_(u"pins"))),
+            ("fixed", 10, urwid.Text(_(u"footprint"))),
+            ("fixed", 6, urwid.Text(_(u"count")))
             ], 2)
         return w
 
     def _entry(self, s):
-        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
+        p = lambda w: urwid.AttrMap(w, "body", "list_f")
         w = p(urwid.Columns([
             ("fixed", 15, urwid.Text(unicode(s.name))),
             urwid.Text(s.summary),

@@ -172,6 +172,13 @@ class History(Storm):
     location_id = Int()
     location = Reference(location_id, Location.id)
 
+    @property
+    def beginning(self):
+        oldest = self
+        while oldest.parent:
+            oldest = oldest.parent
+        return oldest
+
 class Part(Storm):
     """Model for a group of identical parts"""
     __storm_table__ = "parts"
@@ -269,6 +276,10 @@ class Assignment(Storm):
     item = Reference(item_id, Item.id)
     count = Int()
 
+    @property
+    def count_assigned(self):
+        return self.parts.find().sum(Part.count)
+
     def assign(self, part_pile):
         """Takes a pile of parts (one Part row) and assigns it to this slot. If there is more in the pile, it gets splitted.
 
@@ -279,7 +290,7 @@ class Assignment(Storm):
         assert self.part_type == part_pile.part_type
 
         # how many can we actually assign
-        count = min(part_pile.count, self.count - self.parts.find().sum(Part.count))
+        count = min(part_pile.count, self.count - self.count_assigned)
         assert count >= 0
 
         if count == 0:
