@@ -14,7 +14,7 @@ import sys
 from part_selector import SearchForParts, PartSelector, PartCreator
 from selector import GenericSelector, GenericEditor
 from project_selector import ProjectSelector
-
+from browser import Browser
 
 def e(w):
     return urwid.AttrWrap(w, "editbx", "editfc")
@@ -24,7 +24,8 @@ class Actions(app.UIScreen):
     def show(self, args=None):
         content = [
             urwid.Button(u"Příjem", self._switch_screen, SourceSelector),
-            urwid.Button(u"Projekt", self._switch_screen, ProjectSelector)
+            urwid.Button(u"Projekt", self._switch_screen, ProjectSelector),
+            urwid.Button(u"Sklad", self._switch_screen, Browser)
             ]
 
         self.body = urwid.GridFlow(content, 13, 3, 1, "left")

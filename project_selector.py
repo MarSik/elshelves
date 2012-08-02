@@ -5,6 +5,10 @@ import urwid
 import model
 from selector import GenericSelector, GenericEditor
 from part_selector import SearchForParts
+from browser import PartBrowser
+
+class AssignmentPartSelector(PartBrowser):
+    pass
 
 class ItemAssigner(app.UIScreen):
     def __init__(self, a, store, partlist, item, back=None):
@@ -41,6 +45,11 @@ class ItemAssigner(app.UIScreen):
                     new_part.item = self._item
                     new_part.count = int(part.count)
                     self.store.add(new_part)
+
+                    # if there is only one unused pile of parts, assign it
+                    piles = list(self.store.find(model.Part, part_type=part.part_type, assignment=None))
+                    if len(piles) == 1:
+                        new_part.assign(piles[0])
 
             self.store.commit()
         except Exception:
@@ -85,10 +94,6 @@ class AssignmentSelector(GenericSelector):
     def conditions(self):
         return [self.MODEL.item == self._item]
 
-    @property
-    def project(self):
-        return self._project
-
     def add(self):
         return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"item": self._item})
 
@@ -96,8 +101,8 @@ class AssignmentSelector(GenericSelector):
         return None
 
     def select(self, widget, id):
-        # todo select the part pile to get parts from
-        pass
+        # select the part pile to get parts from
+        return AssignmentPartSelector(self.app, self.store, assignment = widget._data)
 
 class ItemEditor(GenericEditor):
     MODEL = model.Item
@@ -191,3 +196,4 @@ class ProjectSelector(GenericSelector):
 
     def select(self, widget, id):
         return ItemSelector(self.app, self.store, project = widget._data)
+

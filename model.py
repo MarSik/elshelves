@@ -279,13 +279,13 @@ class Assignment(Storm):
         assert self.part_type == part_pile.part_type
 
         # how many can we actually assign
-        count = min(part_pile.count, self.count - self.parts.sum(Part.count))
+        count = min(part_pile.count, self.count - self.parts.find().sum(Part.count))
         assert count >= 0
 
-        # there are enough parts, first remove some
         if count == 0:
             return
 
+        # there are enough parts, assign them
         pile = part_pile.take(count)
         pile.assignment = self
 
