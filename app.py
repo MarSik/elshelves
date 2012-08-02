@@ -261,10 +261,12 @@ def Button(content, *args, **kwargs):
     return urwid.AttrWrap(urwid.Button(content, *args, **kwargs), "button", "button_f")
 
 def Edit(label, content, *args, **kwargs):
-    return urwid.AttrWrap(urwid.Edit(label, content, *args, **kwargs), "edit", "edit_f")
+    return urwid.Edit(label, content, *args, **kwargs)
 
 def IntEdit(label, content, *args, **kwargs):
-    return urwid.AttrWrap(urwid.IntEdit(label, content, *args, **kwargs), "edit", "edit_f")
+    w = urwid.IntEdit(label, content, *args, **kwargs)
+    w.set_align_mode("right")
+    return w
 
 def CheckBox(label, content, *args, **kwargs):
-    return urwid.AttrWrap(urwid.CheckBox(label, content, *args, **kwargs), "edit", "edit_f")
+    return urwid.CheckBox(label, content, *args, **kwargs)

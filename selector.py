@@ -29,18 +29,21 @@ class GenericEditor(app.UIScreen):
         self._save.clear()
         listbox_content = []
 
+        def _e(w):
+            return urwid.AttrWrap(w, "edit", "edit_f")
+
         maxlen = max([len(f[0]) for f in self.FIELDS if not "multiline" in f[3]])
 
         for title, attr, edit, args, default in self.FIELDS:
             if "multiline" in args:
                 listbox_content.extend([
                     urwid.Text(title),
-                    edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save)
+                    _e(edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
                     ])
             else:
                 listbox_content.append(urwid.Columns([
                     ("fixed", maxlen, urwid.Text(title)),
-                    edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save)
+                    _e(edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
                     ], 3))
 
         listbox_content += [
