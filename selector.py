@@ -4,8 +4,6 @@ import model
 import urwid
 import app
 
-from part_selector import SearchForParts
-
 class GenericEditor(app.UIScreen):
     MODEL = model.Project
 
@@ -46,11 +44,9 @@ class GenericEditor(app.UIScreen):
         self.store.commit()
         self.close()
 
-class GenericSelector(app.UIScreen):
-    EDITOR = None
+class GenericBrowser(app.UIScreen):
     MODEL = None
     MODEL_ARGS = []
-    ACTION = None
 
     def __init__(self, a, store):
         app.UIScreen.__init__(self, a, store)
@@ -73,16 +69,40 @@ class GenericSelector(app.UIScreen):
         return w
 
     def show(self, args = None):
-        find_args = self.conditions
-        if self.MODEL_ARGS:
-            find_args.extend(self.MODEL_ARGS)
-        listbox_content = [self._header()] + [self._entry(p) for p in self.store.find(self.MODEL, *find_args)]
+        listbox_content = [self._header()] + [self._entry(p) for p in self.content]
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
 
         return self.body
 
+    def input(self, key):
+        if key == "enter":
+            widget, id = self.walker.get_focus()
+            w = self.select(widget, id)
+            if w:
+                self.app.switch_screen_with_return(w)
+                return True
+        else:
+            return key
+
+    def select(self, widget, id):
+        pass
+
+    @property
+    def content(self, args=None):
+        find_args = self.conditions
+        if self.MODEL_ARGS:
+            find_args.extend(self.MODEL_ARGS)
+        return self.store.find(self.MODEL, *find_args)
+
+    @property
+    def conditions(self):
+        return []
+
+class GenericSelector(GenericBrowser):
+    ACTION = None
+    EDITOR = None
 
     def input(self, key):
         if key == "a":
@@ -97,13 +117,8 @@ class GenericSelector(app.UIScreen):
         elif key == "d":
             widget, id = self.walker.get_focus()
             self.remove(widget, id)
-        elif key == "enter":
-            widget, id = self.walker.get_focus()
-            w = self.select(widget, id)
-            if w:
-                self.app.switch_screen_with_return(w)
         else:
-            return key
+            return GenericBrowser.input(self, key)
 
     def remove(self, widget, id):
         self.store.remove(widget._data)
@@ -115,10 +130,3 @@ class GenericSelector(app.UIScreen):
 
     def edit(self, widget, id):
         return self.EDITOR(self.app, self.store, widget._data, caller = self)
-
-    def select(self, widget, id):
-        return SearchForParts(self.app, self.store, action = self.ACTION)
-
-    @property
-    def conditions(self):
-        return []

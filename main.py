@@ -82,7 +82,7 @@ class SourceSelector(GenericSelector):
 
     def select(self, widget, id):
         return SearchForParts(self.app, self.store,
-                              action=PartCreator, source=widget._data)
+                              back=self, action=PartCreator, source=widget._data)
 
 
 def main():

@@ -3,14 +3,47 @@
 import app
 import model
 import urwid
-from selector import GenericSelector
+from selector import GenericBrowser
 
-class PartBrowser(GenericSelector):
+class HistoryBrowser(GenericBrowser):
+    def __init__(self, a, store, history = None):
+        GenericBrowser.__init__(self, a, store)
+        self._history = []
+        while history:
+            self._history.append(history)
+            history = history.parent
+
+    def _header(self):
+        w = urwid.Columns([
+            ("fixed", 20, urwid.Text(u"čas")),
+            ("fixed", 2, urwid.Text(u"událost")),
+            ("fixed", 20, urwid.Text(u"umístění")),
+            urwid.Text(u"popis")
+            ], 2)
+        return w
+
+    def _entry(self, s):
+        p = lambda w: urwid.AttrWrap(w, "body", "editfc_f")
+        w = p(urwid.Columns([
+            ("fixed", 20, urwid.Text(unicode(s.time))),
+            ("fixed", 2, urwid.Text(unicode(s.event))),
+            ("fixed", 20, urwid.Text(unicode(u""))),
+            urwid.Text(s.description or u"")
+            ], 2))
+        w = app.Selectable(w)
+        w._data = s
+        return w
+
+    @property
+    def content(self, args = None):
+        return self._history
+
+class PartBrowser(GenericBrowser):
     MODEL = model.Part
     EDITOR = None
 
     def __init__(self, a, store, assignment = None, part_type = None):
-        GenericSelector.__init__(self, a, store)
+        GenericBrowser.__init__(self, a, store)
         self._assignment = assignment
         self._part_type = part_type
 
@@ -45,20 +78,12 @@ class PartBrowser(GenericSelector):
 
         return conds
 
-    def add(self):
-        pass
-
-    def edit(self, widget, id):
-        return None
-
     def select(self, widget, id):
-        # todo select the part pile to get parts from
-        pass
+        return HistoryBrowser(self.app, self.store, history = widget._data.history)
 
 
-class Browser(GenericSelector):
+class Browser(GenericBrowser):
     MODEL = model.PartType
-    EDITOR = None
 
     def _header(self):
         w = urwid.Columns([
@@ -84,16 +109,6 @@ class Browser(GenericSelector):
         w = app.Selectable(w)
         w._data = s
         return w
-
-
-    def add(self):
-        pass
-
-    def edit(self, widget, id):
-        pass
-
-    def remove(self, widget, id):
-        pass
 
     def select(self, widget, id):
         return PartBrowser(self.app, self.store, assignment = None, part_type = widget._data)
