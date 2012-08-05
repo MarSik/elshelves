@@ -345,6 +345,19 @@ class PartSelector(app.UIScreen):
         else:
             return key
 
+    @property
+    def footer(self):
+        """Method called after show, returns new window footer."""
+        return u""
+
+    @property
+    def title(self):
+        """Method called after show, returns new window title."""
+        s = u"Select the part to use"
+        if self._create_new:
+            s += " or create new one"
+        return s
+
 
 class SearchForParts(app.UIScreen):
     def __init__(self, a, store, source=None, date=None, back=None, action=None,
@@ -452,3 +465,11 @@ class SearchForParts(app.UIScreen):
     @property
     def parts(self):
         return [w._data for w in self.walker[1:-1]]
+
+    @property
+    def title(self):
+        return _(u"Search for parts")
+
+    @property
+    def footer(self):
+        return _(u"Fill search data and press <Save and search>, F8 deletes line.")

@@ -7,9 +7,11 @@ from selector import GenericSelector, GenericEditor
 from part_selector import SearchForParts
 from browser import PartBrowser
 from app import Edit, IntEdit, CheckBox, Button
+from amountdlg import AmountDialog
 
 class AssignmentPartSelector(PartBrowser):
-    pass
+    def edit(self, widget, id):
+        pass
 
 class ItemAssigner(app.UIScreen):
     def __init__(self, a, store, partlist, item, back=None):
@@ -54,8 +56,8 @@ class ItemAssigner(app.UIScreen):
 
             self.store.commit()
         except Exception:
+            self.app.debug()
             self.store.rollback()
-            raise
 
 
 class AssignmentSelector(GenericSelector):
@@ -73,6 +75,9 @@ class AssignmentSelector(GenericSelector):
     def __init__(self, a, store, item):
         GenericSelector.__init__(self, a, store)
         self._item = item
+        self._amdlg = AmountDialog(_(u"no. %s of %s") % (self._item.serial, self._item.project.name),
+                                   _(u"How many parts are required?"),
+                                   0)
 
     @property
     def conditions(self):
@@ -82,11 +87,21 @@ class AssignmentSelector(GenericSelector):
         return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"item": self._item})
 
     def edit(self, widget, id):
-        return None
+        self._amdlg.value = widget._data.count
+        self.app.run_dialog(self._amdlg)
+        widget._data.count = self._amdlg.value
+        self.app.switch_screen(self)
+        self.app.commit()
 
     def select(self, widget, id):
         # select the part pile to get parts from
         return AssignmentPartSelector(self.app, self.store, assignment = widget._data)
+
+    @property
+    def title(self):
+        """Method called after show, returns new window footer."""
+        return _(u"Part types assigned to %s in project %s" % (self._item.serial, self._item.project.name))
+
 
 class ItemEditor(GenericEditor):
     MODEL = model.Item
@@ -103,10 +118,16 @@ class ItemEditor(GenericEditor):
             item.serial = u""
             item.description = u""
             item.project = caller.project
-            item.history = History()
-            item.history.event = History.NEW
+            item.history = model.History()
+            item.history.event = model.History.NEW
 
         GenericEditor.__init__(self, a, store, item)
+
+    @property
+    def title(self):
+        """Method called after show, returns new window title."""
+        return _(u"Edit item")
+
 
 class ItemSelector(GenericSelector):
     EDITOR = ItemEditor
@@ -134,8 +155,19 @@ class ItemSelector(GenericSelector):
     def select(self, widget, id):
         return AssignmentSelector(self.app, self.store, item = widget._data)
 
+    @property
+    def title(self):
+        """Method called after show, returns new window title."""
+        return _(u"Items belonging to project %s") % self._project.name
+
 class ProjectEditor(GenericEditor):
     MODEL = model.Project
+
+    @property
+    def title(self):
+        """Method called after show, returns new window title."""
+        return _(u"Edit project")
+
 
 class ProjectSelector(GenericSelector):
     EDITOR = ProjectEditor
@@ -143,3 +175,8 @@ class ProjectSelector(GenericSelector):
 
     def select(self, widget, id):
         return ItemSelector(self.app, self.store, project = widget._data)
+
+    @property
+    def title(self):
+        """Method called after show, returns new window title."""
+        return _(u"Select project")

@@ -1,5 +1,9 @@
 from storm.locals import create_database, Desc, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float, Or
+from storm.properties import PropertyColumn
 import os.path
+
+
+SortableBase = PropertyColumn
 
 class Tag(Storm):
     """Model for tags"""
@@ -195,6 +199,8 @@ class Part(Storm):
     assignment = Reference(assignment_id, "Assignment.id")
     history_id = Int()
     history = Reference(history_id, History.id)
+    soldered = Bool()
+    usable = Bool(default = True)
 
     def take(self, count):
         """Take some amount of parts from this pile and return the object
@@ -216,6 +222,8 @@ class Part(Storm):
         take.part_type = self.part_type
         take.assignment = self.assignment
         take.history = self.history
+        take.soldered = self.soldered
+        take.usable = self.usable
         Store.of(self).add(take)
 
         return take
@@ -278,7 +286,8 @@ class Assignment(Storm):
 
     @property
     def count_assigned(self):
-        return self.parts.find().sum(Part.count)
+        assigned = self.parts.find().sum(Part.count)
+        return assigned or 0
 
     def assign(self, part_pile):
         """Takes a pile of parts (one Part row) and assigns it to this slot. If there is more in the pile, it gets splitted.
@@ -307,6 +316,7 @@ class Meta(Storm):
     key = Unicode(primary=True)
     value = Unicode()
     changed = DateTime()
+
 
 def getStore(url, create = False):
     d = create_database(url)

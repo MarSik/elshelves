@@ -102,12 +102,14 @@ CREATE TABLE assignments (
 CREATE TABLE parts (
        id integer PRIMARY KEY autoincrement,
        count integer not null check (count > 0),
-       source_id integer references sources (id),
+       source_id integer references sources (id) on delete restrict on update cascade,
        date datetime not null default CURRENT_DATE,
        price float,
        part_type_id integer not null references types (id) on delete restrict on update cascade,
        assignment_id integer references assignments (id) on delete set null on update cascade,
-       history_id references history (id) on delete restrict on update cascade
+       history_id references history (id) on delete restrict on update cascade,
+       soldered boolean not null default false check ((not usable) or (not soldered) or (assignment_id != NULL)),
+       usable boolean not null default true
 );
 
 

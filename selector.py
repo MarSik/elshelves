@@ -72,27 +72,31 @@ class GenericBrowser(app.UIScreen):
         (_(u"name"), "weight", 1, "name"),
         (_(u"summary"), "weight", 3, "summary")
         ]
+    SORT = True
 
     def __init__(self, a, store):
         app.UIScreen.__init__(self, a, store)
+        self.order_by = None
+        self.order_desc = False
 
     def _header(self):
         w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
         return w
 
-    def _entry(self, s):
-        def _val(s, name):
-            for p in name.split("."):
-                s = getattr(s, p)
-            return s
+    def _val(self, s, name):
+        for p in name.split("."):
+            s = getattr(s, p)
+        return s
 
+    def _entry(self, s):
         p = lambda w: urwid.AttrMap(w, "body", "list_f")
-        w = p(urwid.Columns([(f[1], f[2], urwid.Text(unicode(_val(s, f[3])))) for f in self.FIELDS], 3))
+        w = p(urwid.Columns([(f[1], f[2], urwid.Text(unicode(self._val(s, f[3])))) for f in self.FIELDS], 3))
         w = app.Selectable(w)
         w._data = s
         return w
 
     def show(self, args = None):
+        self.order_by = args
         listbox_content = [self._header()] + [self._entry(p) for p in self.content]
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
@@ -107,8 +111,16 @@ class GenericBrowser(app.UIScreen):
             if w:
                 self.app.switch_screen_with_return(w)
                 return True
-        else:
-            return key
+        elif self.SORT:
+            try:
+                col = int(key) - 1
+                f = self.FIELDS[col][3]
+                self.app.switch_screen(self, f)
+                return True
+            except (ValueError, KeyError, IndexError):
+                pass
+
+        return key
 
     def select(self, widget, id):
         pass
@@ -118,11 +130,25 @@ class GenericBrowser(app.UIScreen):
         find_args = self.conditions
         if self.MODEL_ARGS:
             find_args.extend(self.MODEL_ARGS)
-        return self.store.find(self.MODEL, *find_args)
+        res = self.store.find(self.MODEL, *find_args)
+        if self.order_by:
+            try:
+                # try sorting only if it is DB column
+                f = self._val(self.MODEL, self.order_by)
+                if isinstance(f, model.SortableBase):
+                    res.order_by(f)
+            except AttributeError:
+                pass
+        return res
 
     @property
     def conditions(self):
         return []
+
+    @property
+    def footer(self):
+        """Method called after show, returns new window footer."""
+        return _(u"ENTER - select")
 
 class GenericSelector(GenericBrowser):
     ACTION = None
@@ -154,3 +180,9 @@ class GenericSelector(GenericBrowser):
 
     def edit(self, widget, id):
         return self.EDITOR(self.app, self.store, widget._data, caller = self)
+
+    @property
+    def footer(self):
+        """Method called after show, returns new window footer."""
+        return _(u"A - add new, E - edit, D - delete, ENTER - select")
+

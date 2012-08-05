@@ -3,6 +3,58 @@ import urwid.raw_display
 import urwid.web_display
 import weakref
 
+class Dialog(urwid.WidgetWrap):
+    def __init__(self, contents):
+        self.__super.__init__(contents)
+
+    def close(self):
+        raise urwid.ExitMainLoop()
+
+    def dialog_size(self):
+        raise Exception("Mus be implemented in subclass")
+
+class PopUpEnabledFrame(urwid.PopUpLauncher):
+    def __init__(self, original_widget):
+        self.__super.__init__(original_widget)
+        self._dialogs = []
+        self._dialog_sizes = []
+
+    def show_dialog(self, dialog_instance, sizes):
+        self._dialogs.append(dialog_instance)
+        self._dialog_sizes.append(sizes)
+        self.open_pop_up()
+
+    def hide_dialog(self, dialog_instance):
+        closed_dialog = self._dialogs.pop()
+        assert closed_dialog == dialog_instance
+        self._dialog_sizes.pop()
+        if self._dialogs == []:
+            self.close_pop_up()
+        else:
+            self.open_pop_up()
+
+    def set_body(self, w):
+        return self._original_widget.set_body(w)
+
+    def create_pop_up(self):
+        """
+        Subclass must override this method and have is return a widget
+        to be used for the pop-up.  This method is called once each time
+        the pop-up is opened.
+        """
+        return self._dialogs[-1]
+
+    def get_pop_up_parameters(self):
+        """
+        Subclass must override this method and have it return a dict, eg:
+
+        {'left':0, 'top':1, 'overlay_width':30, 'overlay_height':4}
+
+        This method is called each time this widget is rendered.
+        """
+        return self._dialog_sizes[-1]
+
+
 class App(object):
     palette = [
         # base screen color and its selection inverted variant
@@ -33,12 +85,13 @@ class App(object):
     screen = None
 
     def __init__(self, title):
+        self._title = title
         self._setup(title)
 
         self._header = urwid.AttrWrap(urwid.Text(title), 'header')
-        self._frame = urwid.Frame(None, header=self.header)
-
-        self._footer = None
+        self._footer = urwid.AttrWrap(urwid.Text(title), 'header')
+        frame = urwid.Frame(None, header=self._header, footer=self._footer)
+        self._frame = PopUpEnabledFrame(frame)
 
         # screen stack contains triplets
         #  UIScreen to show
@@ -60,6 +113,7 @@ class App(object):
         self.redraw()
         self.redraw() # get back to the previous screen
 
+
     def close_screen(self, scr = None):
         oldscr, oldattr, oldloop = self._screens.pop()
         if scr is not None:
@@ -76,6 +130,14 @@ class App(object):
         else:
             raise urwid.ExitMainLoop()
 
+    def run_dialog(self, dialog):
+
+        sizes = dialog.dialog_size()
+        self._frame.show_dialog(dialog, sizes)
+
+        self.run(self.dialog_input)
+        self._frame.hide_dialog(dialog)
+
     def debug(self):
         if self.screen:
             self.screen.stop()
@@ -90,21 +152,29 @@ class App(object):
 
         screen, args, newloop = self._screens[-1]
         body = screen.show(args)
-        # TODO call screen.title
+
+        title = screen.title or self._title or u""
+        footer = screen.footer or u""
+
         if body:
             body = urwid.AttrMap(body, {"default": "body",
                                         None: "body",
                                         "": "body"})
             self._frame.set_body(body)
+            self._header.set_text(title)
+            self._footer.set_text(footer)
 
         if newloop == True:
             self._screens.pop()
             self._screens.append((screen, args, False))
             self.run()
 
-    def run(self):
+    def run(self, input_handler = None):
+        if input_handler is None:
+            input_handler = self.input
+
         urwid.MainLoop(self._frame, self.palette, self.screen,
-                       unhandled_input=self.input,
+                       unhandled_input=input_handler,
                        pop_ups=True).run()
 
     def _setup(self, title):
@@ -119,6 +189,9 @@ class App(object):
         else:
             self.screen = urwid.raw_display.Screen()
 
+    def dialog_input(self, key):
+        return False
+
     def input(self, key):
         """Method called to process unhandled input key presses."""
         if self._screens:
@@ -131,12 +204,12 @@ class App(object):
             return True
 
     @property
-    def header(self):
-        return self._header
-
-    @property
     def store(self):
         return self._store
+
+    @property
+    def frame(self):
+        return self._frame
 
 
 class UIScreen(object):
@@ -176,9 +249,15 @@ class UIScreen(object):
     def close(self):
         self.app.close_screen(self)
 
-    def title(self, old):
-        """Method called after show, it gets the current window title and can return a new one."""
-        return old
+    @property
+    def footer(self):
+        """Method called after show, returns new window footer."""
+        pass
+
+    @property
+    def title(self):
+        """Method called after show, returns new window title."""
+        pass
 
 
 class Selectable(urwid.WidgetWrap):

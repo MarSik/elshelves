@@ -6,6 +6,16 @@ import urwid
 from selector import GenericBrowser
 
 class HistoryBrowser(GenericBrowser):
+    MODEL = None
+    MODEL_ARGS = []
+    FIELDS = [
+        (_(u"time"), "fixed", 20, "time"),
+        (_(u"event"), "fixed", 2, "event"),
+        (_(u"location"), "fixed", 10, "location"),
+        (_(u"description"), "weight", 2, "description")
+        ]
+    SORT = False
+
     def __init__(self, a, store, history = None):
         GenericBrowser.__init__(self, a, store)
         self._history = []
@@ -13,60 +23,29 @@ class HistoryBrowser(GenericBrowser):
             self._history.append(history)
             history = history.parent
 
-    def _header(self):
-        w = urwid.Columns([
-            ("fixed", 20, urwid.Text(_(u"time"))),
-            ("fixed", 2, urwid.Text(_(u"event"))),
-            ("fixed", 20, urwid.Text(_(u"location"))),
-            urwid.Text(u"popis")
-            ], 2)
-        return w
-
-    def _entry(self, s):
-        p = lambda w: urwid.AttrMap(w, "body", "list_f")
-        w = p(urwid.Columns([
-            ("fixed", 20, urwid.Text(unicode(s.time))),
-            ("fixed", 2, urwid.Text(unicode(s.event))),
-            ("fixed", 20, urwid.Text(unicode(u""))),
-            urwid.Text(s.description or u"")
-            ], 2))
-        w = app.Selectable(w)
-        w._data = s
-        return w
-
     @property
     def content(self, args = None):
         return self._history
 
+    @property
+    def title(self):
+        return _(u"History")
+
 class PartBrowser(GenericBrowser):
     MODEL = model.Part
     EDITOR = None
+    FIELDS = [
+        (_(u"date"), "fixed", 10, "date"),
+        (_(u"source"), "weight", 1, "source.name"),
+        (_(u"price"), "fixed", 10, "price"),
+        (_(u"count"), "fixed", 6, "count")
+        ]
 
-    def __init__(self, a, store, assignment = None, part_type = None):
+    def __init__(self, a, store, assignment = None, part_type = None, unusable = False):
         GenericBrowser.__init__(self, a, store)
         self._assignment = assignment
         self._part_type = part_type
-
-    def _header(self):
-        w = urwid.Columns([
-            ("fixed", 10, urwid.Text(_(u"date"))),
-            urwid.Text(u"zdroj"),
-            ("fixed", 15, urwid.Text(_(u"price"))),
-            ("fixed", 6, urwid.Text(_(u"count")))
-            ], 3)
-        return w
-
-    def _entry(self, s):
-        p = lambda w: urwid.AttrMap(w, "body", "list_f")
-        w = p(urwid.Columns([
-            ("fixed", 10, urwid.Text(unicode(s.date))),
-            urwid.Text(s.source.name),
-            ("fixed", 15, urwid.Text(unicode(s.price))),
-            ("fixed", 6, urwid.Text(unicode(s.count)))
-            ], 3))
-        w = app.Selectable(w)
-        w._data = s
-        return w
+        self._unusable = unusable
 
     @property
     def conditions(self):
@@ -75,40 +54,38 @@ class PartBrowser(GenericBrowser):
             conds.append(self.MODEL.part_type == self._assignment.part_type)
         if self._part_type:
             conds.append(self.MODEL.part_type == self._part_type)
+        if not self._unusable:
+            conds.append(self.MODEL.usable == True)
 
         return conds
 
     def select(self, widget, id):
         return HistoryBrowser(self.app, self.store, history = widget._data.history)
 
+    @property
+    def title(self):
+        s = _("Parts")
+        if self._part_type:
+            s += _(u" of type %s (%s)") % (self._part_type.name, self._part_type.manufacturer)
+        elif self._assignment:
+            s += _(u" of type %s (%s)") % (self._assignment.part_type.name, self._assignment.part_type.manufacturer)
+
+        if self._assignment:
+            s += _(u" assignable to no. %s in %s") % (self._assignment.item.serial,
+                                                     self._assignment.item.project.name)
+        return s
+
 
 class Browser(GenericBrowser):
     MODEL = model.PartType
-
-    def _header(self):
-        w = urwid.Columns([
-            ("fixed", 15, urwid.Text(_(u"name"))),
-            urwid.Text(_(u"summary")),
-            urwid.Text(_(u"manufacturer")),
-            ("fixed", 6, urwid.Text(_(u"pins"))),
-            ("fixed", 10, urwid.Text(_(u"footprint"))),
-            ("fixed", 6, urwid.Text(_(u"count")))
-            ], 2)
-        return w
-
-    def _entry(self, s):
-        p = lambda w: urwid.AttrMap(w, "body", "list_f")
-        w = p(urwid.Columns([
-            ("fixed", 15, urwid.Text(unicode(s.name))),
-            urwid.Text(s.summary),
-            urwid.Text(s.manufacturer),
-            ("fixed", 6, urwid.Text(unicode(s.footprint.pins))),
-            ("fixed", 10, urwid.Text(unicode(s.footprint.name))),
-            ("fixed", 6, urwid.Text(unicode(s.parts.find(assignment=None).sum(model.Part.count)))),
-            ], 2))
-        w = app.Selectable(w)
-        w._data = s
-        return w
+    FIELDS = [
+        (_(u"name"), "fixed", 15, "name"),
+        (_(u"summary"), "weight", 1, "summary"),
+        (_(u"manufacturer"), "weight", 1, "manufacturer"),
+        (_(u"pins"), "fixed", 6, "pins"),
+        (_(u"footprint"), "fixed", 10, "footprint.name"),
+        (_(u"count"), "fixed", 6, "count")
+        ]
 
     def select(self, widget, id):
         return PartBrowser(self.app, self.store, assignment = None, part_type = widget._data)
