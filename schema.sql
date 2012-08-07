@@ -4,7 +4,7 @@ CREATE TABLE meta (
        changed timestamp default CURRENT_TIMESTAMP
 );
 
-INSERT INTO meta VALUES ("version", "0.0.0");
+INSERT INTO meta (key, value) VALUES ("version", "0.0.0");
 
 CREATE TABLE sources (
        id integer PRIMARY KEY autoincrement,
@@ -14,7 +14,7 @@ CREATE TABLE sources (
        home varchar,
        url varchar,
        prices varchar,
-       customs boolean
+       customs integer
 );
 
 CREATE TABLE footprints (
@@ -22,7 +22,7 @@ CREATE TABLE footprints (
        name varchar not null unique check (length(name)),
        summary varchar,
        description varchar,
-       smd boolean,
+       smd integer,
        pins integer,
        kicad varchar
 );
@@ -34,7 +34,7 @@ CREATE TABLE prices (
        time datetime,
        amount integer,
        price float,
-       vat_included boolean,
+       vat_included integer,
        currency varchar
 );
 
@@ -61,7 +61,7 @@ CREATE TABLE history (
        location_id integer references locations (id) on delete restrict on update cascade
 );
 
-CREATE INDEX history_parent on history (parent);
+CREATE INDEX history_parent on history (parent_id);
 
 
 CREATE TABLE projects (
@@ -73,12 +73,14 @@ CREATE TABLE projects (
 
 CREATE TABLE items (
        id integer PRIMARY KEY autoincrement,
-       kit boolean default false,
+       kit integer default 0,
        description varchar,
-       serial varchar unique not null,
+       serial varchar not null,
        project_id integer not null references projects (id) on delete restrict on update cascade,
        history_id integer references history (id) on delete restrict on update cascade
 );
+
+CREATE UNIQUE INDEX items_serial on items (project_id, serial);
 
 CREATE TABLE types (
        id integer PRIMARY KEY autoincrement,
@@ -108,8 +110,8 @@ CREATE TABLE parts (
        part_type_id integer not null references types (id) on delete restrict on update cascade,
        assignment_id integer references assignments (id) on delete set null on update cascade,
        history_id references history (id) on delete restrict on update cascade,
-       soldered boolean not null default false check ((not usable) or (not soldered) or (assignment_id != NULL)),
-       usable boolean not null default true
+       soldered integer not null default 0 check ((not usable) or (not soldered) or (assignment_id != NULL)),
+       usable integer not null default 1
 );
 
 
