@@ -4,7 +4,7 @@ import app
 import urwid
 import model
 from selector import GenericSelector, GenericEditor
-from part_selector import SearchForParts
+from part_selector import SearchForParts, PartCreator
 from browser import PartBrowser
 from app import Edit, IntEdit, CheckBox, Button
 from amountdlg import AmountDialog
@@ -39,6 +39,9 @@ class ItemAssigner(app.UIScreen):
             # save all data to db - completeness checking is done in model
             # verification methods
             for part in self._partlist:
+                if not part.part_type:
+                    part.part_type = PartCreator.create_part_type(self.store, part)
+
                 assert part.part_type is not None
 
                 # known part, just assign new amount request of it
@@ -50,12 +53,17 @@ class ItemAssigner(app.UIScreen):
                     self.store.add(new_part)
 
                     # if there is only one unused pile of parts, assign it
-                    piles = list(self.store.find(model.Part, part_type=part.part_type, assignment=None))
+                    piles = self.store.find(model.Part, part_type=part.part_type, assignment=None)
+                    if piles:
+                        piles = list(piles)
+                    else:
+                        piles = []
+
                     if len(piles) == 1:
                         new_part.assign(piles[0])
 
             self.store.commit()
-        except Exception:
+        except Exception, e:
             self.app.debug()
             self.store.rollback()
 

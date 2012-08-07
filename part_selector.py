@@ -30,6 +30,30 @@ class PartCreator(app.UIScreen):
     def verify(self):
         return None
 
+    @staticmethod
+    def create_part_type(store, part):
+        # get or create footprint
+        footprint = store.find(model.Footprint,
+                                    name=part.footprint).one()
+        if footprint is None:
+            footprint = model.Footprint()
+            footprint.name = part.footprint
+            footprint.pins = part.pins
+            store.add(footprint)
+
+        # part_type
+        new_part_type = model.PartType()
+        new_part_type.footprint = footprint
+        new_part_type.name = part.name
+        new_part_type.summary = part.summary
+        new_part_type.description = part.description
+        new_part_type.datasheet = part.datasheet
+        new_part_type.pins = int(part.pins)
+        new_part_type.manufacturer = part.manufacturer
+        store.add(new_part_type)
+
+        return new_part_type
+
     def save(self):
         try:
             # save all data to db - completeness checking is done in model
@@ -37,27 +61,7 @@ class PartCreator(app.UIScreen):
             for part in self._partlist:
                 if not part.part_type:
                     # unknown part create part type and all dependencies
-
-                    # get or create footprint
-                    footprint = self.store.find(model.Footprint,
-                                                name=part.footprint).one()
-                    if footprint is None:
-                        footprint = model.Footprint()
-                        footprint.name = part.footprint
-                        footprint.pins = part.pins
-                        self.store.add(footprint)
-
-                    # part_type
-                    new_part_type = model.PartType()
-                    new_part_type.footprint = footprint
-                    new_part_type.name = part.name
-                    new_part_type.summary = part.summary
-                    new_part_type.description = part.description
-                    new_part_type.datasheet = part.datasheet
-                    new_part_type.pins = int(part.pins)
-                    new_part_type.manufacturer = part.manufacturer
-                    self.store.add(new_part_type)
-                    part.part_type = new_part_type
+                    part.part_type = PartCreator.create_part_type(self.store, part)
 
                 # known part, just add new amount of it
                 if part.source and int(part.count) > 0:
@@ -184,14 +188,20 @@ class PartSelector(app.UIScreen):
             ("fixed", 10, self._a(IntEdit(u"", unicode(p.pins))
                                   .bind(p, "pins").reg(self._save)))
             ], 3)
-        line3 = urwid.Columns([
+
+        line3_content = [
             ("fixed", 10, urwid.Text(_(u"manufacturer"))),
             self._a(Edit(u"", p.manufacturer).bind(p, "manufacturer")
-                    .reg(self._save)),
+                    .reg(self._save)) ]
+
+        if p.source:
+            line3_content.extend([
             ("fixed", 10, urwid.Text(_(u"sku"))),
             ("fixed", 10, self._a(Edit(u"", p.sku).bind(p, "sku")
-                                  .reg(self._save)))
-            ], 3)
+                                      .reg(self._save)))
+                                      ])
+
+        line3 = urwid.Columns(line3_content, 3)
         line4 = urwid.Columns([
             ("fixed", 10, urwid.Text(_(u"datasheet"))),
             self._a(Edit(u"", p.datasheet).bind(p, "datasheet")
