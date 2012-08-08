@@ -1,0 +1,15 @@
+elshelves is an electronic warehouse tracking app with project and part history tracking.
+
+How to install:
+
+python setup.py install
+
+How to start:
+
+python -m elshelves
+
+Requirements:
+
+python-storm
+python-urwid
+sqlite3

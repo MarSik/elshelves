@@ -1,0 +1,6 @@
+*.pyc
+*.*~
+*.bak
+*.000
+*.sqlite*
+.ropeproject

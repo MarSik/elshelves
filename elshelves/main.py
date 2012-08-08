@@ -1,12 +1,6 @@
 #!/usr/bin/python
 # encoding: utf8
 
-__version__ = "0.0.0"
-__author__ = "Martin Sivak <mars@montik.net>"
-
-import gettext
-gettext.install('elshelves', unicode=1)
-
 import urwid
 import urwid.raw_display
 import urwid.web_display
@@ -35,6 +29,9 @@ class Actions(app.UIScreen):
         s = screen(self.app, self.store)
         self.app.switch_screen_with_return(s)
 
+    @property
+    def footer(self):
+        return _(u"Press ESC to exit")
 
 class SourceEditor(GenericEditor):
     MODEL = model.Source
