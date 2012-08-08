@@ -2,8 +2,6 @@
 # encoding: utf8
 
 import urwid
-import urwid.raw_display
-import urwid.web_display
 import model
 import app
 import sys
@@ -69,16 +67,3 @@ class SourceSelector(GenericSelector):
     @property
     def title(self):
         return _(u"Select a source (vendor) for incoming parts")
-
-def main():
-    errlog = file("error_log", "w")
-    model.debug(errlog)
-
-    store = model.getStore("sqlite:shelves.sqlite3")
-    text_header = "Shelves 0.0.0"
-    a = app.App(text_header)
-    actions_screen = Actions(a, store)
-    a.switch_screen_modal(actions_screen)
-
-if '__main__' == __name__ or urwid.web_display.is_web_request():
-    main()

@@ -3,6 +3,7 @@ gettext.install('elshelves', unicode=1)
 
 import os
 import urwid
+import urwid.web_display
 from version import __version__
 import model
 import app
