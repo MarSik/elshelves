@@ -66,6 +66,9 @@ class SourceSelector(GenericSelector):
         return SearchForParts(self.app, self.store,
                               back=self, action=PartCreator, source=widget._data)
 
+    @property
+    def title(self):
+        return _(u"Select a source (vendor) for incoming parts")
 
 def main():
     errlog = file("error_log", "w")
