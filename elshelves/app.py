@@ -193,7 +193,8 @@ class App(object):
         return False
 
     def input(self, key):
-        """Method called to process unhandled input key presses."""
+        """Method called to process unhandled input key and mouse presses."""
+
         if self._screens:
             key = self._screens[-1][0].input(key)
             if key is None:

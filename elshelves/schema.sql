@@ -114,6 +114,36 @@ CREATE TABLE parts (
        usable integer not null default 1
 );
 
+CREATE TRIGGER parts_update AFTER UPDATE OF assignment_id ON parts WHEN new.assignment_id != NULL BEGIN
+INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_added to project");
+UPDATE parts SET history_id = rowid WHERE id = new.id;
+END;
+
+CREATE TRIGGER parts_remove AFTER UPDATE OF assignment_id ON parts WHEN new.assignment_id == NULL BEGIN
+INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_removed from project");
+UPDATE parts SET history_id = rowid WHERE id = new.id;
+END;
+
+CREATE TRIGGER parts_solder AFTER UPDATE OF soldered ON parts WHEN new.soldered == 1 BEGIN
+INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 4, "_soldered to board");
+UPDATE parts SET history_id = rowid WHERE id = new.id;
+END;
+
+CREATE TRIGGER parts_unsolder AFTER UPDATE OF soldered ON parts WHEN new.soldered != 1 BEGIN
+INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_unsoldered from board");
+UPDATE parts SET history_id = rowid WHERE id = new.id;
+END;
+
+CREATE TRIGGER parts_destroy AFTER UPDATE OF usable ON parts WHEN new.usable == 0 BEGIN
+INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 5, "_destroyed");
+UPDATE parts SET history_id = rowid WHERE id = new.id;
+END;
+
+CREATE TRIGGER parts_revive AFTER UPDATE OF usable ON parts WHEN new.usable > 0 BEGIN
+INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_repaired");
+UPDATE parts SET history_id = rowid WHERE id = new.id;
+END;
+
 
 CREATE TABLE types_sources (
        part_type_id integer not null references types (id) on delete cascade on update cascade,

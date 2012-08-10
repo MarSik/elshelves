@@ -33,12 +33,14 @@ class HistoryBrowser(GenericBrowser):
 
 class PartBrowser(GenericBrowser):
     MODEL = model.Part
-    EDITOR = None
+    EDITOR = False
+
     FIELDS = [
         (_(u"date"), "fixed", 10, "date"),
         (_(u"source"), "weight", 1, "source.name"),
         (_(u"price"), "fixed", 10, "price"),
-        (_(u"count"), "fixed", 6, "count")
+        (_(u"count"), "fixed", 6, "count"),
+        (_(u"assigned"), "fixed", 5, "assigned")
         ]
 
     def __init__(self, a, store, assignment = None, part_type = None, unusable = False):
@@ -75,6 +77,21 @@ class PartBrowser(GenericBrowser):
                                                      self._assignment.item.project.name)
         return s
 
+    def input(self, key):
+        if self.EDITOR and key == "e":
+            widget, id = self.walker.get_focus()
+            self.edit(widget, id)
+            return True
+        else:
+            return GenericBrowser.input(self, key)
+
+    @property
+    def footer(self):
+        """Method called after show, returns new window footer."""
+        if self.EDITOR:
+            return _("ENTER - select, E - edit")
+        else:
+            return _("ENTER - select")
 
 class Browser(GenericBrowser):
     MODEL = model.PartType

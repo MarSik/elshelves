@@ -202,6 +202,11 @@ class Part(Storm):
     soldered = Bool()
     usable = Bool(default = True)
 
+
+    @property
+    def assigned(self):
+        return self.assignment is not None
+
     def take(self, count):
         """Take some amount of parts from this pile and return the object
         representing this amount. Everything gets copied over."""
@@ -289,7 +294,7 @@ class Assignment(Storm):
         assigned = self.parts.find().sum(Part.count)
         return assigned or 0
 
-    def assign(self, part_pile):
+    def assign(self, part_pile, maximum = None):
         """Takes a pile of parts (one Part row) and assigns it to this slot. If there is more in the pile, it gets splitted.
 
         :param part_pile: one Part object containing pile of parts to assign
@@ -298,8 +303,11 @@ class Assignment(Storm):
 
         assert self.part_type == part_pile.part_type
 
+        if maximum is None:
+            maximum = part_pile.count
+
         # how many can we actually assign
-        count = min(part_pile.count, self.count - self.count_assigned)
+        count = min(maximum, part_pile.count, self.count - self.count_assigned)
         assert count >= 0
 
         if count == 0:

@@ -117,7 +117,7 @@ class GenericBrowser(app.UIScreen):
                 f = self.FIELDS[col][3]
                 self.app.switch_screen(self, f)
                 return True
-            except (ValueError, KeyError, IndexError):
+            except (TypeError, ValueError, KeyError, IndexError):
                 pass
 
         return key
@@ -185,4 +185,3 @@ class GenericSelector(GenericBrowser):
     def footer(self):
         """Method called after show, returns new window footer."""
         return _(u"A - add new, E - edit, D - delete, ENTER - select")
-

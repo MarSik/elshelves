@@ -10,8 +10,35 @@ from app import Edit, IntEdit, CheckBox, Button
 from amountdlg import AmountDialog
 
 class AssignmentPartSelector(PartBrowser):
+    EDITOR = True
+
     def edit(self, widget, id):
-        pass
+        if self._assignment == widget._data.assignment:
+            used = widget._data.count
+        else:
+            used = 0
+
+        amdlg = AmountDialog(_(u"%s [%s]") % (widget._data.part_type.name, widget._data.part_type.footprint.name),
+                             _(u"Maximum number of parts to take from this pile [max %d] ?" % widget._data.count),
+                             used)
+
+        self.app.run_dialog(amdlg)
+
+        # unused pile, take parts from it
+        if used == 0 and amdlg.value > 0:
+            self._assignment.assign(widget._data, maximum = amdlg.value)
+            self.store.commit()
+
+        # used pile, remove parts from it
+        elif used > 0 and amdlg.value < used:
+            pile = widget._data.take(used - amdlg.value)
+            pile.assignment = None
+            self.store.add(pile)
+            self.store.commit()
+
+        self.app.switch_screen(self)
+
+
 
 class ItemAssigner(app.UIScreen):
     def __init__(self, a, store, partlist, item, back=None):
@@ -97,9 +124,10 @@ class AssignmentSelector(GenericSelector):
     def edit(self, widget, id):
         self._amdlg.value = widget._data.count
         self.app.run_dialog(self._amdlg)
-        widget._data.count = self._amdlg.value
+        if widget._data.count != self._amdlg.value:
+            widget._data.count = self._amdlg.value
+            self.store.commit()
         self.app.switch_screen(self)
-        self.app.commit()
 
     def select(self, widget, id):
         # select the part pile to get parts from
