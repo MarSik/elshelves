@@ -19,6 +19,7 @@ class Actions(app.UIScreen):
         self._search = u""
 
     def show(self, args=None):
+        self._save.clear()
         self.search_field = app.Edit(u"", u"").bind(self, "_search").reg(self._save)
 
         content = [

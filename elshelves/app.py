@@ -2,6 +2,7 @@ import urwid
 import urwid.raw_display
 import urwid.web_display
 import weakref
+import re
 
 class Dialog(urwid.WidgetWrap):
     def __init__(self, contents):
@@ -356,3 +357,5 @@ def CheckBox(label, content, *args, **kwargs):
 
 def Text(label, content, *args, **kwargs):
     return urwid.Text(u"%s%s" % (label, content), *args, **kwargs)
+
+
