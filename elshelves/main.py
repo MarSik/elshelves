@@ -13,15 +13,41 @@ from browser import Browser
 from app import Edit, IntEdit, CheckBox, Button
 
 class Actions(app.UIScreen):
+    def __init__(self, app_inst, store):
+        app.UIScreen.__init__(self, app_inst, store)
+        self._save = app.SaveRegistry()
+        self._search = u""
+
     def show(self, args=None):
+        self.search_field = app.Edit(u"", u"").bind(self, "_search").reg(self._save)
+
         content = [
             Button(_(u"Add parts"), self._switch_screen, SourceSelector),
             Button(_(u"Use parts"), self._switch_screen, ProjectSelector),
             Button(_(u"Browse parts"), self._switch_screen, Browser)
             ]
 
-        self.body = urwid.GridFlow(content, 20, 3, 1, "left")
-        return urwid.Filler(self.body)
+        self.body = urwid.Filler(urwid.Pile([
+            urwid.GridFlow(content, 16, 3, 1, "left"),
+            urwid.Divider(u" "),
+            urwid.Columns([
+                ("fixed", 13, urwid.Text(_(u"Search parts:"))),
+                urwid.AttrWrap(self.search_field, "edit", "edit_f")
+                ], 1)
+            ]))
+
+        return urwid.Padding(self.body, width = 54, align = "center")
+
+    def input(self, key):
+        if key == "enter": # the only widget that can trigger it is search_field
+            for w in self._save:
+                w.save()
+
+            s = Browser(self.app, self.store, search = self._search)
+            self.app.switch_screen_with_return(s)
+            return True
+        else:
+            return app.UIScreen.input(self, key)
 
     def _switch_screen(self, signal, screen):
         s = screen(self.app, self.store)

@@ -80,11 +80,13 @@ class GenericBrowser(app.UIScreen):
         ]
     SORT = True
     EDITOR = None
+    SEARCH_FIELDS = ["name", "summary", "description"]
 
-    def __init__(self, a, store):
+    def __init__(self, a, store, search = None):
         app.UIScreen.__init__(self, a, store)
         self.order_by = None
         self.order_desc = False
+        self.search = search
 
     def _header(self):
         w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
@@ -145,14 +147,26 @@ class GenericBrowser(app.UIScreen):
         else:
             return _("ENTER - select")
 
+    @property
+    def title(self):
+        p = [_(u"List of parts")]
+        if self.search:
+            p.append(_(u"which contain '%s'") % self.search)
+        return u" ".join(p)
+
     def select(self, widget, id):
         pass
 
     @property
     def content(self, args=None):
         find_args = self.conditions
+
         if self.MODEL_ARGS:
             find_args.extend(self.MODEL_ARGS)
+
+        if self.search:
+            find_args.append(model.Or([getattr(self.MODEL, f).like(u"%%%s%%" % self.search, "$", False) for f in self.SEARCH_FIELDS]))
+
         res = self.store.find(self.MODEL, *find_args)
         if self.order_by:
             try:
