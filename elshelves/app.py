@@ -337,6 +337,9 @@ urwid.CheckBox._bind_live_cb = _bind_live_cb
 urwid.CheckBox.reg = reg
 urwid.CheckBox.save = checksave
 
+urwid.Text.bind = lambda self,x,y: self
+urwid.Text.reg = lambda self,x: self
+
 def Button(content, *args, **kwargs):
     return urwid.AttrWrap(urwid.Button(content, *args, **kwargs), "button", "button_f")
 
@@ -350,3 +353,6 @@ def IntEdit(label, content, *args, **kwargs):
 
 def CheckBox(label, content, *args, **kwargs):
     return urwid.CheckBox(label, content, *args, **kwargs)
+
+def Text(label, content, *args, **kwargs):
+    return urwid.Text(u"%s%s" % (label, content), *args, **kwargs)

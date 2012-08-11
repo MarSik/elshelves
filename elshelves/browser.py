@@ -3,7 +3,8 @@
 import app
 import model
 import urwid
-from selector import GenericBrowser
+from app import Edit, IntEdit, Text
+from selector import GenericBrowser, GenericEditor
 
 class HistoryBrowser(GenericBrowser):
     MODEL = None
@@ -31,10 +32,21 @@ class HistoryBrowser(GenericBrowser):
     def title(self):
         return _(u"History")
 
+class PartEditor(GenericEditor):
+    MODEL = model.Part
+    FIELDS = [
+        (_(u"Name: "), "name", Edit, {}, u""),
+        (_(u"Manufacturer: "), "manufacturer", Edit, {}, u""),
+        (_(u"Summary: "), "summary", Edit, {}, u""),
+        (_(u"Pins: "), "pins", IntEdit, {}, u""),
+        (_(u"Footprint: "), "footprint.name", Text, {}, u""),
+        (_(u"Datasheet: "), "datasheet", Edit, {}, u""),
+        (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
+        ]
+
+
 class PartBrowser(GenericBrowser):
     MODEL = model.Part
-    EDITOR = False
-
     FIELDS = [
         (_(u"date"), "fixed", 10, "date"),
         (_(u"source"), "weight", 1, "source.name"),
@@ -77,21 +89,6 @@ class PartBrowser(GenericBrowser):
                                                      self._assignment.item.project.name)
         return s
 
-    def input(self, key):
-        if self.EDITOR and key == "e":
-            widget, id = self.walker.get_focus()
-            self.edit(widget, id)
-            return True
-        else:
-            return GenericBrowser.input(self, key)
-
-    @property
-    def footer(self):
-        """Method called after show, returns new window footer."""
-        if self.EDITOR:
-            return _("ENTER - select, E - edit")
-        else:
-            return _("ENTER - select")
 
 class Browser(GenericBrowser):
     MODEL = model.PartType
@@ -103,6 +100,7 @@ class Browser(GenericBrowser):
         (_(u"footprint"), "fixed", 10, "footprint.name"),
         (_(u"count"), "fixed", 6, "count")
         ]
+    EDITOR = PartEditor
 
     def select(self, widget, id):
         return PartBrowser(self.app, self.store, assignment = None, part_type = widget._data)

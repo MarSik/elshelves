@@ -25,6 +25,12 @@ class GenericEditor(app.UIScreen):
         self._item = item
         self._save = app.SaveRegistry()
 
+    def _val(self, s, name):
+        for p in name.split("."):
+            s = getattr(s, p)
+        return s
+
+
     def show(self, args = None):
         self._save.clear()
         listbox_content = []
@@ -38,12 +44,12 @@ class GenericEditor(app.UIScreen):
             if "multiline" in args:
                 listbox_content.extend([
                     urwid.Text(title),
-                    _e(edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
+                    _e(edit(u"", self._val(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
                     ])
             else:
                 listbox_content.append(urwid.Columns([
                     ("fixed", maxlen, urwid.Text(title)),
-                    _e(edit(u"", getattr(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
+                    _e(edit(u"", self._val(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
                     ], 3))
 
         listbox_content += [
@@ -73,6 +79,7 @@ class GenericBrowser(app.UIScreen):
         (_(u"summary"), "weight", 3, "summary")
         ]
     SORT = True
+    EDITOR = None
 
     def __init__(self, a, store):
         app.UIScreen.__init__(self, a, store)
@@ -111,6 +118,10 @@ class GenericBrowser(app.UIScreen):
             if w:
                 self.app.switch_screen_with_return(w)
                 return True
+        elif self.EDITOR and key == "e":
+            widget, id = self.walker.get_focus()
+            self.edit(widget, id)
+            return True
         elif self.SORT:
             try:
                 col = int(key) - 1
@@ -121,6 +132,18 @@ class GenericBrowser(app.UIScreen):
                 pass
 
         return key
+
+    def edit(self, widget, id):
+        editor = self.EDITOR(self.app, self.store, item = widget._data, caller = self)
+        self.app.switch_screen_with_return(editor)
+
+    @property
+    def footer(self):
+        """Method called after show, returns new window footer."""
+        if self.EDITOR:
+            return _("ENTER - select, E - edit")
+        else:
+            return _("ENTER - select")
 
     def select(self, widget, id):
         pass
@@ -145,23 +168,12 @@ class GenericBrowser(app.UIScreen):
     def conditions(self):
         return []
 
-    @property
-    def footer(self):
-        """Method called after show, returns new window footer."""
-        return _(u"ENTER - select")
-
 class GenericSelector(GenericBrowser):
     ACTION = None
-    EDITOR = None
 
     def input(self, key):
         if key == "a":
             w = self.add()
-            if w:
-                self.app.switch_screen_with_return(w)
-        elif key == "e":
-            widget, id = self.walker.get_focus()
-            w = self.edit(widget, id)
             if w:
                 self.app.switch_screen_with_return(w)
         elif key == "d":
@@ -177,9 +189,6 @@ class GenericSelector(GenericBrowser):
 
     def add(self):
         return self.EDITOR(self.app, self.store, None, caller = self)
-
-    def edit(self, widget, id):
-        return self.EDITOR(self.app, self.store, widget._data, caller = self)
 
     @property
     def footer(self):
