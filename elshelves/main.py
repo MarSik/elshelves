@@ -67,9 +67,9 @@ class SourceEditor(GenericEditor):
         (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
         ]
 
-    def __init__(self, a, store, source=None, caller = None):
-        if source is None:
-            source = model.Source(
+    def __init__(self, a, store, item=None, caller = None):
+        if item is None:
+            item = model.Source(
                 name=u"",
                 summary=u"",
                 description=u"",
@@ -77,7 +77,7 @@ class SourceEditor(GenericEditor):
                 url=u"http://.../%s"
                 )
 
-        GenericEditor.__init__(self, a, store, source, caller)
+        GenericEditor.__init__(self, a, store, item, caller)
 
 
 class SourceSelector(GenericSelector):
@@ -85,7 +85,7 @@ class SourceSelector(GenericSelector):
     EDITOR = SourceEditor
 
     def __init__(self, a, store):
-        app.UIScreen.__init__(self, a, store)
+        GenericSelector.__init__(self, a, store)
 
     def select(self, widget, id):
         return SearchForParts(self.app, self.store,
