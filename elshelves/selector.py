@@ -71,6 +71,12 @@ class GenericEditor(app.UIScreen):
         self.store.commit()
         self.close()
 
+class GenericKeybindings(dict):
+    def __add__(self, added):
+        d = self.copy()
+        d.update(added)
+        return d
+
 class GenericBrowser(app.UIScreen):
     MODEL = None
     MODEL_ARGS = []
@@ -81,6 +87,14 @@ class GenericBrowser(app.UIScreen):
     SORT = True
     EDITOR = None
     SEARCH_FIELDS = ["name", "summary", "description"]
+
+    #KEYS: key -> title, method, f(self) -> bool
+    KEYS = GenericKeybindings({
+        "e": (_(u"edit"), "edit", lambda self: self.EDITOR),
+        "enter": (_(u"select"), "select", lambda self: True)
+        })
+
+    REFRESH = True
 
     def __init__(self, a, store, search = None):
         app.UIScreen.__init__(self, a, store)
@@ -114,16 +128,18 @@ class GenericBrowser(app.UIScreen):
         return self.body
 
     def input(self, key):
-        if key == "enter":
+        if key in self.KEYS and self.KEYS[key][2](self):
             widget, id = self.walker.get_focus()
-            w = self.select(widget, id)
-            if w:
+            w = getattr(self, self.KEYS[key][1])(widget, id)
+            if w == self.REFRESH:
+                self.app.switch_screen(self)
+                return True
+            elif w is None:
+                return True
+            else:
                 self.app.switch_screen_with_return(w)
                 return True
-        elif self.EDITOR and key == "e":
-            widget, id = self.walker.get_focus()
-            self.edit(widget, id)
-            return True
+
         elif self.SORT:
             try:
                 col = int(key) - 1
@@ -137,15 +153,14 @@ class GenericBrowser(app.UIScreen):
 
     def edit(self, widget, id):
         editor = self.EDITOR(self.app, self.store, item = widget._data, caller = self)
-        self.app.switch_screen_with_return(editor)
+        return editor
 
     @property
     def footer(self):
         """Method called after show, returns new window footer."""
-        if self.EDITOR:
-            return _("ENTER - select, E - edit")
-        else:
-            return _("ENTER - select")
+        keys = [u"%s - %s" % (k,v[0]) for k,v in self.KEYS.iteritems() if v[2](self)]
+        keys.append(_("<number> - sort column"))
+        return u", ".join(keys)
 
     @property
     def title(self):
@@ -184,27 +199,16 @@ class GenericBrowser(app.UIScreen):
 
 class GenericSelector(GenericBrowser):
     ACTION = None
-
-    def input(self, key):
-        if key == "a":
-            w = self.add()
-            if w:
-                self.app.switch_screen_with_return(w)
-        elif key == "d":
-            widget, id = self.walker.get_focus()
-            self.remove(widget, id)
-        else:
-            return GenericBrowser.input(self, key)
+    KEYS = GenericBrowser.KEYS + {
+        "a": (_(u"add new"), "add", lambda s: True),
+        "d": (_(u"delete"), "remove", lambda s: True),
+        }
 
     def remove(self, widget, id):
         self.store.remove(widget._data)
         self.store.commit()
-        self.app.switch_screen(self)
+        return self.REFRESH
 
-    def add(self):
+    def add(self, widget, id):
         return self.EDITOR(self.app, self.store, None, caller = self)
 
-    @property
-    def footer(self):
-        """Method called after show, returns new window footer."""
-        return _(u"A - add new, E - edit, D - delete, ENTER - select")

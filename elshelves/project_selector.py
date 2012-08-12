@@ -20,7 +20,7 @@ class AssignmentPartSelector(PartBrowser):
 
         amdlg = AmountDialog(_(u"%s [%s]") % (widget._data.part_type.name, widget._data.part_type.footprint.name),
                              _(u"Maximum number of parts to take from this pile [max %d] ?" % widget._data.count),
-                             used)
+                             widget._data.count)
 
         self.app.run_dialog(amdlg)
 
@@ -97,7 +97,7 @@ class ItemAssigner(app.UIScreen):
 
 class AssignmentSelector(GenericSelector):
     MODEL = model.Assignment
-    EDITOR = None
+    EDITOR = True
     FIELDS = [
         (_(u"type"), "fixed", 15, "part_type.name"),
         (_(u"footprint"), "fixed", 10, "part_type.footprint.name"),
@@ -118,7 +118,7 @@ class AssignmentSelector(GenericSelector):
     def conditions(self):
         return [self.MODEL.item == self._item]
 
-    def add(self):
+    def add(self, widget, id):
         return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"item": self._item})
 
     def edit(self, widget, id):
@@ -127,7 +127,7 @@ class AssignmentSelector(GenericSelector):
         if widget._data.count != self._amdlg.value:
             widget._data.count = self._amdlg.value
             self.store.commit()
-        self.app.switch_screen(self)
+        return self.REFRESH
 
     def select(self, widget, id):
         # select the part pile to get parts from
