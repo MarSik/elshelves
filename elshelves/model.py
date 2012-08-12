@@ -183,6 +183,10 @@ class History(Storm):
             oldest = oldest.parent
         return oldest
 
+    @property
+    def date(self):
+        return self.time.date()
+
 class Part(Storm):
     """Model for a group of identical parts"""
     __storm_table__ = "parts"

@@ -60,7 +60,9 @@ class GenericEditor(app.UIScreen):
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
 
-        return self.body
+        w,h = self.app.screen.get_cols_rows()
+
+        return urwid.Padding(self.body, width = w - 2, align = "center")
 
     def save(self, signal, args = None):
         for w in self._save:
@@ -94,6 +96,7 @@ class GenericBrowser(app.UIScreen):
         "enter": (_(u"select"), "select", lambda self: True)
         })
 
+    ALWAYS = lambda self: True
     REFRESH = True
 
     def __init__(self, a, store, search = None):
@@ -113,7 +116,18 @@ class GenericBrowser(app.UIScreen):
 
     def _entry(self, s):
         p = lambda w: urwid.AttrMap(w, "body", "list_f")
-        w = p(urwid.Columns([(f[1], f[2], urwid.Text(unicode(self._val(s, f[3])))) for f in self.FIELDS], 3))
+        def _prep(f):
+            val = self._val(s, f[3])
+            if isinstance(val, bool) and val == True:
+                return _(u"[x]")
+            elif isinstance(val, bool) and val == False:
+                return _(u"[ ]")
+            elif val is None:
+                return _(u"0")
+            else:
+                return unicode(val)
+
+        w = p(urwid.Columns([(f[1], f[2], urwid.Text(_prep(f))) for f in self.FIELDS], 2))
         w = app.Selectable(w)
         w._data = s
         return w
@@ -125,7 +139,9 @@ class GenericBrowser(app.UIScreen):
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
 
-        return self.body
+        w,h = self.app.screen.get_cols_rows()
+
+        return urwid.Padding(self.body, width = w - 2, align = "center")
 
     def input(self, key):
         if key in self.KEYS and self.KEYS[key][2](self):

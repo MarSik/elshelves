@@ -51,8 +51,9 @@ class PartBrowser(GenericBrowser):
         (_(u"date"), "fixed", 10, "date"),
         (_(u"source"), "weight", 1, "source.name"),
         (_(u"price"), "fixed", 10, "price"),
-        (_(u"count"), "fixed", 6, "count"),
-        (_(u"assigned"), "fixed", 5, "assigned")
+        (_(u"cnt"), "fixed", 5, "count"),
+        (_(u"asn"), "fixed", 3, "assigned"),
+        (_(u"sld"), "fixed", 3, "assigned")
         ]
 
     def __init__(self, a, store, assignment = None, part_type = None, unusable = False):
@@ -63,13 +64,13 @@ class PartBrowser(GenericBrowser):
 
     @property
     def conditions(self):
-        conds = [model.Or(self.MODEL.assignment == self._assignment, self.MODEL.assignment == None)]
+        conds = [model.Or(self.MODEL.usable, self.MODEL.usable != self._unusable),
+                 model.Or(self.MODEL.assignment == self._assignment,
+                          self.MODEL.assignment == None)]
         if self._assignment:
             conds.append(self.MODEL.part_type == self._assignment.part_type)
         if self._part_type:
             conds.append(self.MODEL.part_type == self._part_type)
-        if not self._unusable:
-            conds.append(self.MODEL.usable == True)
 
         return conds
 

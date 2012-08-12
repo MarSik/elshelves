@@ -11,6 +11,20 @@ from amountdlg import AmountDialog
 
 class AssignmentPartSelector(PartBrowser):
     EDITOR = True
+    KEYS = PartBrowser.KEYS + {
+        "S": (_(u"solder"), "solder", PartBrowser.ALWAYS),
+        "D": (_(u"desolder"), "desolder", PartBrowser.ALWAYS),
+        "K": (_(u"kill"), "kill", PartBrowser.ALWAYS)
+        }
+
+    def solder(self, widget, id):
+        pass
+
+    def desolder(self, widget, id):
+        pass
+
+    def kill(self, widget, id):
+        pass
 
     def edit(self, widget, id):
         if self._assignment == widget._data.assignment:
@@ -170,10 +184,10 @@ class ItemSelector(GenericSelector):
     MODEL = model.Item
     FIELDS = [
         (_(u"id"), "fixed", 5, "id"),
-        (_(u"serial no."), "fixed", 20, "serial"),
-        (_(u"kit"), "weight", 1, "kit"),
-        (_(u"changed"), "fixed", 20, "history.time"),
-        (_(u"added"), "fixed", 20, "history.beginning.time")
+        (_(u"serial no."), "weight", 1, "serial"),
+        (_(u"kit"), "fixed", 3, "kit"),
+        (_(u"changed"), "fixed", 10, "history.date"),
+        (_(u"added"), "fixed", 10, "history.beginning.date")
         ]
 
     def __init__(self, a, store, project):
