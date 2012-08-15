@@ -68,7 +68,8 @@ CREATE TABLE projects (
        id integer PRIMARY KEY autoincrement,
        name varchar not null check (length(name)),
        summary varchar,
-       description varchar
+       description varchar,
+       started datetime not null default CURRENT_DATE
 );
 
 CREATE TABLE items (
@@ -110,9 +111,11 @@ CREATE TABLE parts (
        part_type_id integer not null references types (id) on delete restrict on update cascade,
        assignment_id integer references assignments (id) on delete set null on update cascade,
        history_id references history (id) on delete restrict on update cascade,
-       soldered integer not null default 0 check ((not usable) or (not soldered) or (assignment_id != NULL)),
+       soldered integer not null default 0 check ((not usable) or (usable and not soldered) or (usable and assignment_id != NULL)),
        usable integer not null default 1
 );
+
+CREATE INDEX parts_buys on parts (date, source_id);
 
 CREATE TRIGGER parts_update AFTER UPDATE OF assignment_id ON parts WHEN new.assignment_id != NULL BEGIN
 INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_added to project");

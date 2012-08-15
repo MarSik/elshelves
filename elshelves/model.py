@@ -261,11 +261,19 @@ class Project(Storm):
     name = Unicode(default=u"test")
     summary = Unicode(default=u"pokus")
     description = Unicode()
+    started = Date()
+    items = ReferenceSet(id, "Item.project_id")
 
     def __init__(self, name = u"", summary = u"", description = u""):
         self.name = name
         self.summary = summary
         self.description = description
+
+    @property
+    def count_items(self):
+        items = self.items.find().count()
+        return items or 0
+
 
 class Item(Storm):
     """Model for actual built items"""

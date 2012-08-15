@@ -254,6 +254,12 @@ class ProjectEditor(GenericEditor):
 class ProjectSelector(GenericSelector):
     EDITOR = ProjectEditor
     MODEL = model.Project
+    FIELDS = [
+        (_(u"started"), "fixed", 10, "started"),
+        (_(u"name"), "weight", 1, "name"),
+        (_(u"summary"), "weight", 3, "summary"),
+        (_(u"cnt"), "fixed", 3, "count_items")
+        ]
 
     def select(self, widget, id):
         return ItemSelector(self.app, self.store, project = widget._data)
