@@ -298,6 +298,11 @@ class Assignment(Storm):
         assigned = self.parts.find().sum(Part.count)
         return assigned or 0
 
+    @property
+    def count_soldered(self):
+        soldered = self.parts.find(soldered = True).sum(Part.count)
+        return soldered or 0
+
     def assign(self, part_pile, maximum = None):
         """Takes a pile of parts (one Part row) and assigns it to this slot. If there is more in the pile, it gets splitted.
 

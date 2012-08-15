@@ -4,7 +4,7 @@ CREATE TABLE meta (
        changed timestamp default CURRENT_TIMESTAMP
 );
 
-INSERT INTO meta (key, value) VALUES ("version", "0.0.0");
+INSERT INTO meta (key, value) VALUES ("version", "0.0.1");
 
 CREATE TABLE sources (
        id integer PRIMARY KEY autoincrement,
@@ -124,22 +124,22 @@ INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_r
 UPDATE parts SET history_id = rowid WHERE id = new.id;
 END;
 
-CREATE TRIGGER parts_solder AFTER UPDATE OF soldered ON parts WHEN new.soldered == 1 BEGIN
+CREATE TRIGGER parts_solder AFTER UPDATE OF soldered ON parts WHEN new.soldered == 1 and old.soldered == 0 BEGIN
 INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 4, "_soldered to board");
 UPDATE parts SET history_id = rowid WHERE id = new.id;
 END;
 
-CREATE TRIGGER parts_unsolder AFTER UPDATE OF soldered ON parts WHEN new.soldered != 1 BEGIN
+CREATE TRIGGER parts_unsolder AFTER UPDATE OF soldered ON parts WHEN new.soldered == 0 and old.soldered == 1 BEGIN
 INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_unsoldered from board");
 UPDATE parts SET history_id = rowid WHERE id = new.id;
 END;
 
-CREATE TRIGGER parts_destroy AFTER UPDATE OF usable ON parts WHEN new.usable == 0 BEGIN
+CREATE TRIGGER parts_destroy AFTER UPDATE OF usable ON parts WHEN new.usable == 0 and old.usable == 1 BEGIN
 INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 5, "_destroyed");
 UPDATE parts SET history_id = rowid WHERE id = new.id;
 END;
 
-CREATE TRIGGER parts_revive AFTER UPDATE OF usable ON parts WHEN new.usable > 0 BEGIN
+CREATE TRIGGER parts_revive AFTER UPDATE OF usable ON parts WHEN new.usable > 0 and old.usable == 0 BEGIN
 INSERT INTO history (parent_id,event,description) VALUES (new.history_id, 3, "_repaired");
 UPDATE parts SET history_id = rowid WHERE id = new.id;
 END;

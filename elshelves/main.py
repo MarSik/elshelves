@@ -90,12 +90,16 @@ class SourceSelector(GenericSelector):
         GenericSelector.__init__(self, a, store)
 
     def select(self, widget, id):
-        dialog = DateDialog(_(u"Date"), _(u"When did you get the new parts?"),
+        dialog = DateDialog(self.app, _(u"Date"), _(u"When did you get the new parts?"),
                             datetime.date.today())
-        self.app.run_dialog(dialog)
+        ok = self.app.run_dialog(dialog)
+        if not ok:
+            return
 
         return SearchForParts(self.app, self.store,
-                              back=self, action=PartCreator, source=widget._data)
+                              back=self, action=PartCreator,
+                              date=dialog.value,
+                              source=widget._data)
 
     @property
     def title(self):

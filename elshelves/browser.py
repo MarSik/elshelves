@@ -53,7 +53,7 @@ class PartBrowser(GenericBrowser):
         (_(u"price"), "fixed", 10, "price"),
         (_(u"cnt"), "fixed", 5, "count"),
         (_(u"asn"), "fixed", 3, "assigned"),
-        (_(u"sld"), "fixed", 3, "assigned")
+        (_(u"sld"), "fixed", 3, "soldered")
         ]
 
     def __init__(self, a, store, assignment = None, part_type = None, unusable = False):

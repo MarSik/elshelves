@@ -17,14 +17,44 @@ class AssignmentPartSelector(PartBrowser):
         "K": (_(u"kill"), "kill", PartBrowser.ALWAYS)
         }
 
+    def do_solder(self, pile, msg, solder = True):
+        if not self._assignment or pile.assignment != self._assignment:
+            return
+
+        if pile.count > 1:
+            amdlg = AmountDialog(self.app, _(u"%s [%s]") % (pile.part_type.name, pile.part_type.footprint.name),
+                                 _(u"How many parts were %s [max %d] ?" % (msg, pile.count)),
+                                 pile.count)
+
+            if self.app.run_dialog(amdlg):
+                pile = pile.take(amdlg.value)
+                self.store.add(pile)
+            else:
+                pile = None
+
+        if pile:
+            pile.soldered = solder
+            self.store.commit()
+            return self.REFRESH
+
     def solder(self, widget, id):
-        pass
+        return self.do_solder(widget._data, _(u"soldered"), solder = True)
 
     def desolder(self, widget, id):
-        pass
+        return self.do_solder(widget._data, _(u"unsoldered"), solder = False)
 
     def kill(self, widget, id):
-        pass
+        amdlg = AmountDialog(self.app, _(u"%s [%s]") % (widget._data.part_type.name, widget._data.part_type.footprint.name),
+                             _(u"How many parts were destroyed [max %d] ?" % widget._data.count),
+                             0)
+
+        if self.app.run_dialog(amdlg):
+            pile = widget._data.take(amdlg.value)
+            pile.assignment = None
+            pile.usable = False
+            self.store.add(pile)
+            self.store.commit()
+            return self.REFRESH
 
     def edit(self, widget, id):
         if self._assignment == widget._data.assignment:
@@ -32,11 +62,12 @@ class AssignmentPartSelector(PartBrowser):
         else:
             used = 0
 
-        amdlg = AmountDialog(_(u"%s [%s]") % (widget._data.part_type.name, widget._data.part_type.footprint.name),
+        amdlg = AmountDialog(self.app, _(u"%s [%s]") % (widget._data.part_type.name, widget._data.part_type.footprint.name),
                              _(u"Maximum number of parts to take from this pile [max %d] ?" % widget._data.count),
                              widget._data.count)
 
-        self.app.run_dialog(amdlg)
+        if not self.app.run_dialog(amdlg):
+            return
 
         # unused pile, take parts from it
         if used == 0 and amdlg.value > 0:
@@ -50,8 +81,7 @@ class AssignmentPartSelector(PartBrowser):
             self.store.add(pile)
             self.store.commit()
 
-        self.app.switch_screen(self)
-
+        return self.REFRESH
 
 
 class ItemAssigner(app.UIScreen):
@@ -117,14 +147,15 @@ class AssignmentSelector(GenericSelector):
         (_(u"footprint"), "fixed", 10, "part_type.footprint.name"),
         (_(u"summary"), "weight", 1, "part_type.summary"),
         (_(u"manufacturer"), "fixed", 15, "part_type.manufacturer"),
-        (_(u"count"), "fixed", 6, "count_assigned"),
-        (_(u"required"), "fixed", 6, "count")
+        (_(u"req"), "fixed", 3, "count"),
+        (_(u"cnt"), "fixed", 3, "count_assigned"),
+        (_(u"sld"), "fixed", 3, "count_soldered"),
         ]
 
     def __init__(self, a, store, item):
         GenericSelector.__init__(self, a, store)
         self._item = item
-        self._amdlg = AmountDialog(_(u"no. %s of %s") % (self._item.serial, self._item.project.name),
+        self._amdlg = AmountDialog(self.app, _(u"no. %s of %s") % (self._item.serial, self._item.project.name),
                                    _(u"How many parts are required?"),
                                    0)
 
@@ -137,7 +168,8 @@ class AssignmentSelector(GenericSelector):
 
     def edit(self, widget, id):
         self._amdlg.value = widget._data.count
-        self.app.run_dialog(self._amdlg)
+        if not self.app.run_dialog(self._amdlg):
+            return
         if widget._data.count != self._amdlg.value:
             widget._data.count = self._amdlg.value
             self.store.commit()

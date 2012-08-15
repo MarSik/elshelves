@@ -6,8 +6,21 @@ import re
 import edit
 
 class Dialog(urwid.WidgetWrap):
-    def __init__(self, contents):
+    def __init__(self, app, contents):
         self.__super.__init__(contents)
+        self._result = None
+        self._app = app
+
+    @property
+    def app(self):
+        return self._app
+
+    def pre_open(self):
+        self._result = None
+
+    @property
+    def result(self):
+        return self._result
 
     def ok(self):
         pass
@@ -54,6 +67,7 @@ class PopUpEnabledFrame(urwid.PopUpLauncher):
         to be used for the pop-up.  This method is called once each time
         the pop-up is opened.
         """
+        self._dialogs[-1].pre_open()
         return self._dialogs[-1]
 
     def get_pop_up_parameters(self):
@@ -149,6 +163,7 @@ class App(object):
 
         self.run(self.dialog_input)
         self._frame.hide_dialog(dialog)
+        return dialog.result
 
     def debug(self):
         if self.screen:
@@ -368,9 +383,12 @@ def Edit(label, content, *args, **kwargs):
     return edit.EmacsEdit(label, content, *args, **kwargs)
 
 def IntEdit(label, content, *args, **kwargs):
-    w = urwid.IntEdit(label, content, *args, **kwargs)
+    w = edit.EmacsIntEdit(label, content, *args, **kwargs)
     w.set_align_mode("right")
     return w
+
+def DateEdit(label, content, *args, **kwargs):
+    return edit.DateEdit(label, content, *args, **kwargs)
 
 def CheckBox(label, content, *args, **kwargs):
     return urwid.CheckBox(label, content, *args, **kwargs)
