@@ -14,6 +14,9 @@ from app import Edit, IntEdit, CheckBox, Button
 from amountdlg import DateDialog
 import datetime
 
+class SearchBrowser(Browser):
+    SEARCH_FIELDS = Browser.SEARCH_FIELDS + ["manufacturer"]
+
 class Actions(app.UIScreen):
     def __init__(self, app_inst, store):
         app.UIScreen.__init__(self, app_inst, store)
@@ -23,6 +26,7 @@ class Actions(app.UIScreen):
     def show(self, args=None):
         self._save.clear()
         self.search_field = app.Edit(u"", u"").bind(self, "_search").reg(self._save)
+        urwid.connect_signal(self.search_field, "enter", self.search)
 
         content = [
             Button(_(u"Add parts"), self._switch_screen, SourceSelector),
@@ -41,16 +45,13 @@ class Actions(app.UIScreen):
 
         return urwid.Padding(self.body, width = 54, align = "center")
 
-    def input(self, key):
-        if key == "enter": # the only widget that can trigger it is search_field
-            for w in self._save:
-                w.save()
+    def search(self, widget = None):
+        for w in self._save:
+            w.save()
 
-            s = Browser(self.app, self.store, search = self._search)
-            self.app.switch_screen_with_return(s)
-            return True
-        else:
-            return app.UIScreen.input(self, key)
+        search = SearchBrowser(self.app, self.store, search = self._search)
+        self.app.switch_screen_with_return(search)
+        return True
 
     def _switch_screen(self, signal, screen):
         s = screen(self.app, self.store)
