@@ -3,10 +3,17 @@ import urwid.raw_display
 import urwid.web_display
 import weakref
 import re
+import edit
 
 class Dialog(urwid.WidgetWrap):
     def __init__(self, contents):
         self.__super.__init__(contents)
+
+    def ok(self):
+        pass
+
+    def cancel(self):
+        pass
 
     def close(self):
         raise urwid.ExitMainLoop()
@@ -33,6 +40,10 @@ class PopUpEnabledFrame(urwid.PopUpLauncher):
             self.close_pop_up()
         else:
             self.open_pop_up()
+
+    @property
+    def current_dialog(self):
+        return self._dialogs[-1]
 
     def set_body(self, w):
         return self._original_widget.set_body(w)
@@ -191,6 +202,15 @@ class App(object):
             self.screen = urwid.raw_display.Screen()
 
     def dialog_input(self, key):
+        dialog  = self._frame.current_dialog
+        if dialog and key == 'esc':
+            dialog.cancel()
+            return True
+
+        if dialog and key == 'enter':
+            dialog.ok()
+            return True
+
         return False
 
     def input(self, key):
@@ -345,7 +365,7 @@ def Button(content, *args, **kwargs):
     return urwid.AttrWrap(urwid.Button(content, *args, **kwargs), "button", "button_f")
 
 def Edit(label, content, *args, **kwargs):
-    return urwid.Edit(label, content, *args, **kwargs)
+    return edit.EmacsEdit(label, content, *args, **kwargs)
 
 def IntEdit(label, content, *args, **kwargs):
     w = urwid.IntEdit(label, content, *args, **kwargs)

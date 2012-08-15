@@ -4,6 +4,7 @@ import model
 import urwid
 import app
 from app import Edit, IntEdit, CheckBox, Button
+from edit import DateEdit
 
 class GenericEditor(app.UIScreen):
     MODEL = model.Project

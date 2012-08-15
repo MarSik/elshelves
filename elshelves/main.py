@@ -11,6 +11,8 @@ from selector import GenericSelector, GenericEditor
 from project_selector import ProjectSelector
 from browser import Browser
 from app import Edit, IntEdit, CheckBox, Button
+from amountdlg import DateDialog
+import datetime
 
 class Actions(app.UIScreen):
     def __init__(self, app_inst, store):
@@ -88,6 +90,10 @@ class SourceSelector(GenericSelector):
         GenericSelector.__init__(self, a, store)
 
     def select(self, widget, id):
+        dialog = DateDialog(_(u"Date"), _(u"When did you get the new parts?"),
+                            datetime.date.today())
+        self.app.run_dialog(dialog)
+
         return SearchForParts(self.app, self.store,
                               back=self, action=PartCreator, source=widget._data)
 

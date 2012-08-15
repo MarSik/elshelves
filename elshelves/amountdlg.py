@@ -1,24 +1,31 @@
 import urwid
 import app
+from edit import DateEdit
 
 class AmountDialog(app.Dialog):
-    def _ok(self, button):
+    EDIT_FIELD = app.IntEdit, {}
+
+    def ok(self, button = None):
         self._value = self.edit_field.value()
         self.close()
 
-    def _cancel(self, button):
+    def cancel(self, button = None):
         self.close()
 
-    def __init__(self, title, description, default = 0, cb = None, args = None):
+    def __init__(self, title, description, default = None, cb = None, args = None):
         self.title = title
         self.description = description
         self._value = default
         self.cb = cb
         self.args = args
 
-        self.edit_field = app.IntEdit(u"", self.value)
-        ok_button = app.Button(_("OK"), self._ok)
-        cancel_button = app.Button(_("Cancel"), self._cancel)
+        self.edit_field = self.EDIT_FIELD[0](u"", self.value, **self.EDIT_FIELD[1])
+        length = len(self.edit_field.get_edit_text())
+        self.edit_field.highlight = (0, length)
+        urwid.connect_signal(self.edit_field, "enter", self.ok)
+
+        ok_button = app.Button(_("OK"), self.ok)
+        cancel_button = app.Button(_("Cancel"), self.cancel)
 
         pile = urwid.Pile([
             urwid.Text(self.description),
@@ -44,3 +51,6 @@ class AmountDialog(app.Dialog):
     def value(self, val):
         self._value = val
         self.edit_field.set_edit_text(str(val))
+
+class DateDialog(AmountDialog):
+    EDIT_FIELD = DateEdit, {"mask": _(u"YYYY-mm-dd")}
