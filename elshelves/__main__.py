@@ -23,7 +23,7 @@ def main():
     errlog = file(os.path.join(confdir, "error_log"), "w")
     model.debug(errlog)
 
-    store = model.getStore("sqlite:%s" % dbfile, create = not os.path.exists(dbfile))
+    store = model.getStore("sqlitefk:%s" % dbfile, create = not os.path.exists(dbfile))
 
     schema_version = store.get(model.Meta, u"version").value
 

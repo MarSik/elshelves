@@ -1,3 +1,5 @@
+PRAGMA foreign_keys=ON;
+
 CREATE TABLE meta (
        key varchar PRIMARY KEY,
        value varchar,

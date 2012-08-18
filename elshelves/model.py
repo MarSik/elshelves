@@ -1,7 +1,9 @@
 from storm.locals import create_database, Desc, Storm, Unicode, Int, Bool, DateTime, Date, Reference, ReferenceSet, Store, Float, Or
 from storm.properties import PropertyColumn
+from storm.databases.sqlite import SQLite
+from storm.database import register_scheme
 import os.path
-
+import datetime
 
 SortableBase = PropertyColumn
 
@@ -334,6 +336,35 @@ class Assignment(Storm):
         pile = part_pile.take(count)
         pile.assignment = self
 
+class Struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+def RawPart(extra = None):
+    p = {
+        "part_type": None,
+        "search_name": u"",
+        "name": u"",
+        "summary": u"",
+        "description": u"",
+        "footprint": u"",
+        "pins": 0,
+        "manufacturer": u"",
+        "sku": u"",
+        "count": 0,
+        "date": datetime.date.today(),
+        "unitprice": 0,
+        "source": None,
+        "datasheet": u"",
+        "matches": []
+        }
+
+    if extra:
+        p.update(extra)
+
+    return Struct(**p)
+
+
 class Meta(Storm):
     """Model for many to many relationship between Source and PartType"""
     __storm_table__ = "meta"
@@ -342,13 +373,22 @@ class Meta(Storm):
     value = Unicode()
     changed = DateTime()
 
+class ForeignKeysSQLite(SQLite):
+    """Set SQLite foreign key integrity mode. Has to be set
+       on raw connection as storm.Store does too much magic with
+       transactions"""
+
+    def raw_connect(self):
+        connection = SQLite.raw_connect(self)
+        connection.execute("PRAGMA foreign_keys = ON")
+        return connection
 
 def getStore(url, create = False):
+    # register new Storm scheme
+    register_scheme("sqlitefk", ForeignKeysSQLite)
+
     d = create_database(url)
     s = Store(d)
-
-    if url.startswith("sqlite:"):
-        s.execute("PRAGMA foreign_keys = ON;")
 
     if create:
         schema = file(os.path.join(os.path.dirname(__file__), "schema.sql"), "r").read().split("\n\n")

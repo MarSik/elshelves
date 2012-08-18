@@ -5,10 +5,6 @@ import app
 import model
 from app import Edit, IntEdit, CheckBox, Button
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
 
 class PartCreator(app.UIScreen):
     def __init__(self, a, store, partlist, back=None):
@@ -228,9 +224,14 @@ class PartSelector(app.UIScreen):
         return urwid.Text(_(u"No part type found"))
 
     def _header(self, p):
+        if p.date:
+            date = unicode(p.date.strftime("%Y-%m-%d"))
+        else:
+            date = _(u"-today-")
+
         cols = [
             ("weight", 2, urwid.Text(p.search_name)),
-            urwid.Text(p.date or _(u"-today-"))
+            urwid.Text(date)
             ]
 
         if p.source:
@@ -370,17 +371,14 @@ class PartSelector(app.UIScreen):
 
 
 class SearchForParts(app.UIScreen):
-    def __init__(self, a, store, source=None, date=None, back=None, action=None,
-                 action_kwargs={}, selector=PartSelector, extra=None):
+    def __init__(self, a, store, back=None, action=None,
+                 action_kwargs={}, selector=PartSelector, parts = [], extra=None):
         app.UIScreen.__init__(self, a, store, back)
-        self._date = None
         self._save = app.SaveRegistry()
         self._action = action
         self._action_kwargs = action_kwargs
         self._selector = selector
         self._extra = extra
-
-        self._source = source
 
         w = urwid.Columns([
             ("weight", 2, urwid.Text(_(u"name"))),
@@ -397,32 +395,12 @@ class SearchForParts(app.UIScreen):
             urwid.Divider(u" ")
             ], 3)
 
+        content = [w]
+        content.extend([self._entry(p) for p in parts])
+        content.append(buttons)
 
         self.walker = urwid.SimpleListWalker([w, buttons])
 
-    def _newpart(self):
-        p = {
-            "part_type": None,
-            "search_name": u"",
-            "name": u"",
-            "summary": u"",
-            "description": u"",
-            "footprint": u"",
-            "pins": 0,
-            "manufacturer": u"",
-            "sku": u"",
-            "count": 0,
-            "date": self._date,
-            "unitprice": 0,
-            "source": self._source,
-            "datasheet": u"",
-            "matches": []
-            }
-
-        if self._extra:
-            p.update(self._extra)
-
-        return Struct(**p)
 
     def _entry(self, s):
         p = lambda w: urwid.AttrWrap(w, "edit", "edit_f")
@@ -444,7 +422,7 @@ class SearchForParts(app.UIScreen):
         return self.body
 
     def add(self, signal, args=None):
-        p = self._newpart()
+        p = model.RawPart(self._extra)
 
         buttons = self.walker.pop()
         self.walker.append(self._entry(p))

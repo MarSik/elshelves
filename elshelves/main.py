@@ -99,8 +99,9 @@ class SourceSelector(GenericSelector):
 
         return SearchForParts(self.app, self.store,
                               back=self, action=PartCreator,
-                              date=dialog.value,
-                              source=widget._data)
+                              extra = {
+                                  "date": dialog.value,
+                                  "source": widget._data})
 
     @property
     def title(self):
