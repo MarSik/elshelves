@@ -346,7 +346,7 @@ def save(self):
     assert type(self.edit_text) == unicode
     setattr(obj, attr, self.edit_text)
 
-def intsave(self):
+def valuesave(self):
     """Save the value to the binded data object."""
     assert hasattr(self, "_bind") and self._bind
     (obj, attr) = self._bind
@@ -365,7 +365,8 @@ urwid.Edit._bind_live_cb = _bind_live_cb
 urwid.Edit.reg = reg
 urwid.Edit.save = save
 
-urwid.IntEdit.save = intsave
+edit.EmacsIntEdit.save = valuesave
+edit.DateEdit.save = valuesave
 
 urwid.CheckBox.bind = bind
 urwid.CheckBox.bind_live = bind_live
@@ -382,9 +383,9 @@ def Button(content, *args, **kwargs):
 def Edit(label, content, *args, **kwargs):
     return edit.EmacsEdit(label, content, *args, **kwargs)
 
-def IntEdit(label, content, *args, **kwargs):
+def IntEdit(label, content, align = "left", *args, **kwargs):
     w = edit.EmacsIntEdit(label, content, *args, **kwargs)
-    w.set_align_mode("right")
+    w.set_align_mode(align)
     return w
 
 def DateEdit(label, content, *args, **kwargs):

@@ -21,10 +21,25 @@ class PartCreator(app.UIScreen):
                 self.save()
                 self.close()
             except Exception, e:
+                self.app.debug()
                 self.back(0)
 
     def verify(self):
-        return None
+        errors = []
+        for id,part in enumerate(self._partlist):
+            if part.part_type:
+                continue
+
+            if not part.name:
+                errors.append((id, _(u"Part name is missing")))
+
+            if not part.footprint:
+                errors.append((id, _(u"Part footprint is missing")))
+
+            if not part.pins or part.pins == u"0":
+                errors.append((id, _(u"Part must have more than 0 pins")))
+
+        return errors
 
     @staticmethod
     def create_part_type(store, part):
@@ -34,7 +49,7 @@ class PartCreator(app.UIScreen):
         if footprint is None:
             footprint = model.Footprint()
             footprint.name = part.footprint
-            footprint.pins = part.pins
+            footprint.pins = int(part.pins)
             store.add(footprint)
 
         # part_type
@@ -54,6 +69,10 @@ class PartCreator(app.UIScreen):
         try:
             # save all data to db - completeness checking is done in model
             # verification methods
+            new_history = model.History()
+            new_history.event = model.History.INCOMING
+            self.store.add(new_history)
+
             for part in self._partlist:
                 if not part.part_type:
                     # unknown part create part type and all dependencies
@@ -61,10 +80,6 @@ class PartCreator(app.UIScreen):
 
                 # known part, just add new amount of it
                 if part.source and int(part.count) > 0:
-                    new_history = model.History()
-                    new_history.event = model.History.INCOMING
-                    self.store.add(new_history)
-
                     new_part = model.Part()
                     new_part.part_type = part.part_type
                     new_part.count = int(part.count)
@@ -181,7 +196,7 @@ class PartSelector(app.UIScreen):
             self._a(Edit(u"", p.summary).bind(p, "summary")
                     .reg(self._save)),
             ("fixed", 10, urwid.Text(_(u"pins"))),
-            ("fixed", 10, self._a(IntEdit(u"", unicode(p.pins))
+            ("fixed", 10, self._a(IntEdit(u"", unicode(p.pins), align = "right")
                                   .bind(p, "pins").reg(self._save)))
             ], 3)
 
@@ -238,13 +253,13 @@ class PartSelector(app.UIScreen):
             cols.extend([
                 ("fixed", len(p.source.name), urwid.Text(p.source.name)),
                 ("fixed", 6, urwid.Text(_(u"price:"))),
-                self._a(IntEdit(u"", p.unitprice).bind(p, "unitprice")
+                self._a(IntEdit(u"", p.unitprice, align = "right").bind(p, "unitprice")
                         .reg(self._save))
                 ])
 
         cols.extend([
             ("fixed", 6, urwid.Text(_(u"count"))),
-            self._a(IntEdit(u"", p.count).bind(p, "count")
+            self._a(IntEdit(u"", p.count, align = "right").bind(p, "count")
                     .reg(self._save)),
             ("weight", 1, urwid.Text(u"[%d/%d]" %
                                      (self._current + 1, len(self._partlist))))
@@ -253,8 +268,10 @@ class PartSelector(app.UIScreen):
         return urwid.AttrWrap(urwid.Columns(cols, 1), "part")
 
     def show(self, args=None):
+        if len(self._partlist) == 0:
+            self.back()
 
-        if args is None:
+        if args is None or args >= len(self._partlist):
             args = 0
 
         self._current = args
@@ -276,6 +293,9 @@ class PartSelector(app.UIScreen):
                     part.pins = footprint.pins
                 else:
                     for p in self._partlist:
+                        if part.part_type:
+                            continue
+
                         if part.footprint.lower() == p.footprint.lower() and p.pins:
                             part.pins = p.pins
 
@@ -305,10 +325,16 @@ class PartSelector(app.UIScreen):
         else:
             buttons.append(Button(_(u"Back"), lambda a: self.back()))
 
+
         if args < len(self._partlist) - 1:
             buttons.append(Button(_(u"Next"), self.next))
         else:
             buttons.append(Button(_(u"Save"), self.save))
+
+        listbox_content.append(urwid.Columns(buttons, 3))
+
+        buttons = []
+        buttons.append(Button(_(u"Remove"), self.remove))
 
         listbox_content.append(urwid.Columns(buttons, 3))
 
@@ -330,6 +356,10 @@ class PartSelector(app.UIScreen):
             w.save()
 
         self.app.switch_screen(self, self._current + 1)
+
+    def remove(self, signal, args=None):
+        del self._partlist[self._current]
+        self.app.switch_screen(self, self._current)
 
     def prev(self, signal, args=None):
         for w in self._save:
@@ -399,7 +429,7 @@ class SearchForParts(app.UIScreen):
         content.extend([self._entry(p) for p in parts])
         content.append(buttons)
 
-        self.walker = urwid.SimpleListWalker([w, buttons])
+        self.walker = urwid.SimpleListWalker(content)
 
 
     def _entry(self, s):
@@ -409,7 +439,7 @@ class SearchForParts(app.UIScreen):
             ("fixed", 10, p(Edit(u"", s.footprint).bind(s, "footprint").reg(self._save))),
             ("weight", 1, p(Edit(u"", s.manufacturer).bind(s, "manufacturer").reg(self._save))),
             ("fixed", 10, p(Edit(u"", s.sku).bind(s, "sku").reg(self._save))),
-            ("fixed", 6, p(IntEdit(u"", unicode(s.count)).bind(s, "count").reg(self._save))),
+            ("fixed", 6, p(IntEdit(u"", unicode(s.count), align = "right").bind(s, "count").reg(self._save))),
             ("fixed", 6, p(Edit(u"", unicode(s.unitprice)).bind(s, "unitprice").reg(self._save))),
             ], 3)
         w._data = s

@@ -2,12 +2,15 @@ import gettext
 gettext.install('elshelves', unicode=1)
 
 import os
+import optparse
+
 import urwid
 import urwid.web_display
 from version import __version__
 import model
 import app
 from main import Actions
+from part_selector import SearchForParts, PartCreator
 
 def main():
     homedir = os.environ['HOME']
@@ -31,7 +34,42 @@ def main():
 
     a = app.App(text_header)
     actions_screen = Actions(a, store)
-    a.switch_screen_modal(actions_screen)
+    a.switch_screen_with_return(actions_screen)
+
+    parser = optparse.OptionParser()
+    parser.add_option("--importorg", action="store", default = None)
+    opts, args = parser.parse_args()
+
+    if opts.importorg:
+        try:
+            data = open(opts.importorg, "r").readlines()
+            parts = []
+            for l in data:
+                if l.strip() == "":
+                    continue
+                l = [i.strip() for i in l[1:].split("|", 7)]
+
+                source = store.find(model.Source, model.Source.name.like("%%%s%%" % l[3].decode("utf8"), "$", False)).one()
+
+                p = model.RawPart({
+                    "search_name": l[0].decode("utf8"),
+                    "count": int(l[1]),
+                    "manufacturer": l[2].decode("utf8"),
+                    "source": source,
+                    "summary": l[4].decode("utf8"),
+                    "footprint": l[5].decode("utf8"),
+                    "description": l[6].decode("utf8")
+                    })
+                parts.append(p)
+
+            dlg = SearchForParts(a, store,
+                                 back=None, action=PartCreator,
+                                 parts = parts)
+            a.switch_screen_with_return(dlg)
+        except:
+            raise
+
+    a.run()
 
 if '__main__' == __name__ or urwid.web_display.is_web_request():
     main()
