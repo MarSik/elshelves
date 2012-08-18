@@ -143,7 +143,7 @@ class PartType(Storm):
         if not Store.of(self):
             return 0
 
-        return Store.of(self).find(Part, Part.part_type_id == self.id, Part.assignment == None, Part.usable == True).sum(Part.count)
+        return Store.of(self).find(Part, Part.part_type_id == self.id, Part.assignment == None, Part.usable == True).sum(Part.count) or 0
 
 
 class Location(Storm):

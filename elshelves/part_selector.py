@@ -159,6 +159,10 @@ class PartSelector(app.UIScreen):
             ("fixed", 10, self._c(urwid.Text(unicode(p.count))))
             ], 3)
         line4 = urwid.Columns([
+            ("fixed", 10, urwid.Text(_(u"manufacturer"))),
+            self._c(urwid.Text(p.manufacturer)),
+            ], 3)
+        line5 = urwid.Columns([
             ("fixed", 10, urwid.Text(_(u"datasheet"))),
             self._c(urwid.Text(p.datasheet)),
             ], 3)
@@ -170,6 +174,7 @@ class PartSelector(app.UIScreen):
             line2,
             line3,
             line4,
+            line5,
             urwid.Pile(sources),
             desc_title,
             desc,
