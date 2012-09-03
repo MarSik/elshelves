@@ -352,7 +352,7 @@ def RawPart(extra = None):
         "manufacturer": u"",
         "sku": u"",
         "count": 0,
-        "date": datetime.date.today(),
+        "date": None,
         "unitprice": 0,
         "source": None,
         "datasheet": u"",
@@ -423,7 +423,7 @@ def fill_matches(store, data):
                          .values(PartType.id)))
 
     if sku:
-        args = [ PartSource.sku == sku ]
+        args = [ PartSource.sku.like("%s%%" % sku, "$", False) ]
         if source is not None:
             args.append(PartSource.source == source)
 
@@ -433,7 +433,8 @@ def fill_matches(store, data):
                      .values(PartSource.part_type_id)))
 
     if manufacturer:
-        parts.append(list(store.find(PartType, PartType.manufacturer.like("%%%s%%" % manufacturer, "$", False))
+        parts.append(list(store.find(PartType, Or(PartType.manufacturer == u"",
+                                                  PartType.manufacturer.like("%%%s%%" % manufacturer, "$", False)))
                      .config(distinct = True)
                      .values(PartType.id)))
 
