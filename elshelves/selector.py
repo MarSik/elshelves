@@ -197,7 +197,8 @@ class GenericBrowser(app.UIScreen):
             find_args.extend(self.MODEL_ARGS)
 
         if self.search:
-            find_args.append(model.Or([getattr(self.MODEL, f).like(u"%%%s%%" % self.search, "$", False) for f in self.SEARCH_FIELDS]))
+            for term in self.search.split():
+                find_args.append(model.Or([getattr(self.MODEL, f).like(u"%%%s%%" % term, "$", False) for f in self.SEARCH_FIELDS]))
 
         res = self.store.find(self.MODEL, *find_args)
         if self.order_by:
