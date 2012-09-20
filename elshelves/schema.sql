@@ -6,7 +6,7 @@ CREATE TABLE meta (
        changed timestamp default CURRENT_TIMESTAMP
 );
 
-INSERT INTO meta (key, value) VALUES ("version", "0.0.1");
+INSERT INTO meta (key, value) VALUES ("version", "0.0.2");
 
 CREATE TABLE sources (
        id integer PRIMARY KEY autoincrement,
@@ -14,6 +14,7 @@ CREATE TABLE sources (
        summary varchar,
        description varchar,
        home varchar,
+       vat float,
        url varchar,
        prices varchar,
        customs integer
@@ -36,7 +37,7 @@ CREATE TABLE prices (
        time datetime,
        amount integer,
        price float,
-       vat_included integer,
+       vat float,
        currency varchar
 );
 

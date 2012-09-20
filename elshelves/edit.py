@@ -84,7 +84,7 @@ class FloatEdit(EmacsEdit):
 
         return False
 
-    def __init__(self,caption="",default=None, allow_nan=True):
+    def __init__(self,caption="",default=None, allow_nan=True, allow_none = False):
         """
         caption -- caption markup
         default -- default edit value
@@ -97,6 +97,7 @@ class FloatEdit(EmacsEdit):
         self.has_focus=False
         self.allow_nan=allow_nan
         self.__super.__init__(caption,val)
+        self.allow_none = allow_none
 
     def keypress(self, size, key):
         """
@@ -122,6 +123,8 @@ class FloatEdit(EmacsEdit):
         """
         if self.edit_text:
             return float(self.edit_text)
+        elif self.allow_none:
+            return None
         else:
             return 0
 
@@ -350,7 +353,7 @@ class EmacsIntEdit(EmacsEdit):
         """
         return len(ch)==1 and ch in "0123456789"
 
-    def __init__(self,caption="",default=None):
+    def __init__(self,caption="",default=None, allow_none = False):
         """
         caption -- caption markup
         default -- default edit value
@@ -361,6 +364,7 @@ class EmacsIntEdit(EmacsEdit):
         if default is not None: val = str(default)
         else: val = ""
         self.__super.__init__(caption,val)
+        self.allow_none = allow_none
 
     def keypress(self, size, key):
         """
@@ -380,7 +384,7 @@ class EmacsIntEdit(EmacsEdit):
 
         if not unhandled:
         # trim leading zeros
-            while len(self.edit_text) > 0 and \
+            while len(self.edit_text) > 1 and \
                   self.edit_pos > 0 and \
                   self.edit_text[:1] == "0":
                 self.set_edit_pos(self.edit_pos - 1)
@@ -400,5 +404,7 @@ class EmacsIntEdit(EmacsEdit):
         """
         if self.edit_text:
             return long(self.edit_text)
+        elif self.allow_none:
+            return None
         else:
             return 0

@@ -388,6 +388,11 @@ def IntEdit(label, content, align = "left", *args, **kwargs):
     w.set_align_mode(align)
     return w
 
+def FloatEdit(label, content, align = "left", *args, **kwargs):
+    w = edit.FloatEdit(label, content, *args, **kwargs)
+    w.set_align_mode(align)
+    return w
+
 def DateEdit(label, content, *args, **kwargs):
     return edit.DateEdit(label, content, *args, **kwargs)
 

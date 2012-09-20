@@ -22,6 +22,11 @@ class GenericInterface(app.UIScreen):
     ALWAYS = lambda self: True
     REFRESH = True
 
+    def _val(self, s, name):
+        for p in name.split("."):
+            s = getattr(s, p)
+        return s
+
     def select(self, widget, id):
         pass
 
@@ -62,11 +67,6 @@ class GenericEditor(GenericInterface):
         self._caller = caller
         self._item = item
         self._save = app.SaveRegistry()
-
-    def _val(self, s, name):
-        for p in name.split("."):
-            s = getattr(s, p)
-        return s
 
     def details(self, args = None):
         return []
@@ -142,11 +142,6 @@ class GenericBrowser(GenericInterface):
         w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
         return w
 
-    def _val(self, s, name):
-        for p in name.split("."):
-            s = getattr(s, p)
-        return s
-
     def _entry(self, s):
         p = lambda w: urwid.AttrMap(w, "body", "list_f")
         def _prep(f):
@@ -156,7 +151,7 @@ class GenericBrowser(GenericInterface):
             elif isinstance(val, bool) and val == False:
                 return _(u"[ ]")
             elif val is None:
-                return _(u"0")
+                return _(u"-")
             else:
                 return unicode(val)
 

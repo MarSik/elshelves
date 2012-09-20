@@ -3,7 +3,7 @@
 import urwid
 import app
 import model
-from app import Edit, IntEdit, CheckBox, Button
+from app import Edit, FloatEdit, IntEdit, CheckBox, Button
 
 
 class PartCreator(app.UIScreen):
@@ -85,7 +85,10 @@ class PartCreator(app.UIScreen):
                     new_part.count = int(part.count)
                     if part.date:
                         new_part.date = part.date
-                    new_part.price = float(part.unitprice)
+                    if part.unitprice is not None:
+                        new_part.price = float(part.unitprice)
+                        if part.vat is not None:
+                            new_part.vat = float(part.vat)
                     new_part.source = part.source
                     new_part.history = new_history
                     self.store.add(new_part)
@@ -258,7 +261,10 @@ class PartSelector(app.UIScreen):
             cols.extend([
                 ("fixed", len(p.source.name), urwid.Text(p.source.name)),
                 ("fixed", 6, urwid.Text(_(u"price:"))),
-                self._a(IntEdit(u"", p.unitprice, align = "right").bind(p, "unitprice")
+                self._a(FloatEdit(u"", p.unitprice, align = "right", allow_none = True).bind(p, "unitprice")
+                        .reg(self._save)),
+                ("fixed", 4, urwid.Text(_(u"vat:"))),
+                self._a(FloatEdit(u"", p.vat, align = "right", allow_none = True).bind(p, "vat")
                         .reg(self._save))
                 ])
 
@@ -445,7 +451,7 @@ class SearchForParts(app.UIScreen):
             ("weight", 1, p(Edit(u"", s.manufacturer).bind(s, "manufacturer").reg(self._save))),
             ("fixed", 10, p(Edit(u"", s.sku).bind(s, "sku").reg(self._save))),
             ("fixed", 6, p(IntEdit(u"", unicode(s.count), align = "right").bind(s, "count").reg(self._save))),
-            ("fixed", 6, p(Edit(u"", unicode(s.unitprice)).bind(s, "unitprice").reg(self._save))),
+            ("fixed", 6, p(FloatEdit(u"", unicode(s.unitprice)).bind(s, "unitprice").reg(self._save))),
             ], 3)
         w._data = s
         return w

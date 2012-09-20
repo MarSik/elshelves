@@ -10,7 +10,7 @@ from part_selector import SearchForParts, PartSelector, PartCreator
 from selector import GenericSelector, GenericEditor
 from project_selector import ProjectSelector
 from browser import Browser
-from app import Edit, IntEdit, CheckBox, Button
+from app import Edit, FloatEdit, IntEdit, CheckBox, Button
 from amountdlg import DateDialog
 import datetime
 
@@ -67,6 +67,7 @@ class SourceEditor(GenericEditor):
         (_(u"Name: "), "name", Edit, {}, u""),
         (_(u"Homepage: "), "home", Edit, {}, u""),
         (_(u"Summary: "), "summary", Edit, {}, u""),
+        (_(u"Vat: "), "vat", FloatEdit, {"allow_none": True}, u""),
         (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
         ]
 
@@ -101,7 +102,8 @@ class SourceSelector(GenericSelector):
                               back=self, action=PartCreator,
                               extra = {
                                   "date": dialog.value,
-                                  "source": widget._data})
+                                  "source": widget._data,
+                                  "vat": widget._data.vat})
 
     @property
     def title(self):

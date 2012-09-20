@@ -39,6 +39,7 @@ class PartBrowser(GenericBrowser):
         (_(u"date"), "fixed", 10, "date"),
         (_(u"source"), "weight", 1, "source.name"),
         (_(u"price"), "fixed", 10, "price"),
+        (_(u"vat"), "fixed", 4, "vat"),
         (_(u"cnt"), "fixed", 5, "count"),
         (_(u"asn"), "fixed", 3, "assigned"),
         (_(u"sld"), "fixed", 3, "soldered")

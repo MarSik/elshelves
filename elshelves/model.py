@@ -44,7 +44,7 @@ class Price(Storm):
     time = DateTime()
     amount = Int()
     price = Float()
-    vat_included = Bool()
+    vat = Float() # in percents or Null if included
     currency = Unicode()
 
 class Source(Storm):
@@ -55,6 +55,8 @@ class Source(Storm):
     name = Unicode()
     summary = Unicode()
     description = Unicode()
+
+    vat = Float() # default vat in percents or None if included in prices
 
     home = Unicode() # homepage
     url = Unicode() # formatting string with %s to be replaced by part id to get direct url
@@ -199,6 +201,7 @@ class Part(Storm):
     source = Reference(source_id, Source.id)
     date = Date()
     price = Float()
+    vat = Float() # in percents or None if included in price
     part_type_id = Int()
     part_type = Reference(part_type_id, PartType.id)
     assignment_id = Int()
@@ -354,6 +357,7 @@ def RawPart(extra = None):
         "count": 0,
         "date": None,
         "unitprice": 0,
+        "vat": None,
         "source": None,
         "datasheet": u"",
         "matches": []
