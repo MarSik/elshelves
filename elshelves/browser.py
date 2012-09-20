@@ -32,18 +32,6 @@ class HistoryBrowser(GenericBrowser):
     def title(self):
         return _(u"History")
 
-class PartEditor(GenericEditor):
-    MODEL = model.Part
-    FIELDS = [
-        (_(u"Name: "), "name", Edit, {}, u""),
-        (_(u"Manufacturer: "), "manufacturer", Edit, {}, u""),
-        (_(u"Summary: "), "summary", Edit, {}, u""),
-        (_(u"Pins: "), "pins", IntEdit, {}, u""),
-        (_(u"Footprint: "), "footprint.name", Text, {}, u""),
-        (_(u"Datasheet: "), "datasheet", Edit, {}, u""),
-        (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
-        ]
-
 
 class PartBrowser(GenericBrowser):
     MODEL = model.Part
@@ -90,6 +78,36 @@ class PartBrowser(GenericBrowser):
                                                      self._assignment.item.project.name)
         return s
 
+class PartEditor(GenericEditor):
+    MODEL = model.Part
+    FIELDS = [
+        (_(u"Name: "), "name", Edit, {}, u""),
+        (_(u"Manufacturer: "), "manufacturer", Edit, {}, u""),
+        (_(u"Summary: "), "summary", Edit, {}, u""),
+        (_(u"Pins: "), "pins", IntEdit, {}, u""),
+        (_(u"Footprint: "), "footprint.name", Text, {}, u""),
+        (_(u"Datasheet: "), "datasheet", Edit, {}, u""),
+        (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
+        ]
+
+    DETAIL_FIELDS = PartBrowser.FIELDS
+
+    def __init__(self, a, store, item = None, caller = None):
+        GenericEditor.__init__(self, a, store, item, caller)
+        self._browser = PartBrowser(a, store, part_type = item)
+
+    def details(self, args = None):
+        def _decorate_from(o, where_from):
+            o._from = where_from
+            return o
+
+        return [urwid.Divider(u" "), self._browser._header()] + [_decorate_from(self._browser._entry(p), self._browser) for p in self._browser.content]
+
+    def select(self, widget, id):
+        if hasattr(widget, "_from"):
+            return widget._from.select(widget, id)
+        else:
+            return False
 
 class Browser(GenericBrowser):
     MODEL = model.PartType
@@ -104,4 +122,4 @@ class Browser(GenericBrowser):
     EDITOR = PartEditor
 
     def select(self, widget, id):
-        return PartBrowser(self.app, self.store, assignment = None, part_type = widget._data)
+        return PartEditor(self.app, self.store, item = widget._data, caller = self)

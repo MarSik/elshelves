@@ -5,8 +5,45 @@ import urwid
 import app
 from app import Edit, IntEdit, CheckBox, Button
 from edit import DateEdit
+import copy
 
-class GenericEditor(app.UIScreen):
+class GenericKeybindings(dict):
+    def __add__(self, added):
+        d = copy.copy(self)
+        d.update(added)
+        return d
+
+class GenericInterface(app.UIScreen):
+    #KEYS: key -> title, method, f(self) -> bool
+    KEYS = GenericKeybindings({
+        "enter": (_(u"select"), "select", lambda self: True)
+        })
+
+    ALWAYS = lambda self: True
+    REFRESH = True
+
+    def select(self, widget, id):
+        pass
+
+    def input(self, key):
+        if key in self.KEYS and self.KEYS[key][2](self):
+            widget, id = self.walker.get_focus()
+            w = getattr(self, self.KEYS[key][1])(widget, id)
+            if w == self.REFRESH:
+                self.app.switch_screen(self)
+                return True
+            elif w is None:
+                return True
+            elif w == False:
+                return key
+            else:
+                self.app.switch_screen_with_return(w)
+                return True
+
+        else:
+            return key
+
+class GenericEditor(GenericInterface):
     MODEL = model.Project
     FIELDS = [
         (_(u"Name: "), "name", Edit, {}, u""),
@@ -31,6 +68,8 @@ class GenericEditor(app.UIScreen):
             s = getattr(s, p)
         return s
 
+    def details(self, args = None):
+        return []
 
     def show(self, args = None):
         self._save.clear()
@@ -57,6 +96,9 @@ class GenericEditor(app.UIScreen):
             urwid.Divider(u" "),
             Button(_(u"Save"), self.save)
             ]
+
+        listbox_content.extend(self.details(args))
+
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
@@ -74,13 +116,7 @@ class GenericEditor(app.UIScreen):
         self.store.commit()
         self.close()
 
-class GenericKeybindings(dict):
-    def __add__(self, added):
-        d = self.copy()
-        d.update(added)
-        return d
-
-class GenericBrowser(app.UIScreen):
+class GenericBrowser(GenericInterface):
     MODEL = None
     MODEL_ARGS = []
     FIELDS = [
@@ -91,14 +127,10 @@ class GenericBrowser(app.UIScreen):
     EDITOR = None
     SEARCH_FIELDS = ["name", "summary", "description"]
 
-    #KEYS: key -> title, method, f(self) -> bool
-    KEYS = GenericKeybindings({
-        "e": (_(u"edit"), "edit", lambda self: self.EDITOR),
-        "enter": (_(u"select"), "select", lambda self: True)
-        })
+    KEYS = GenericInterface.KEYS + {
+        "e": (_(u"edit"), "edit", lambda self: self.EDITOR)
+        }
 
-    ALWAYS = lambda self: True
-    REFRESH = True
 
     def __init__(self, a, store, search = None):
         app.UIScreen.__init__(self, a, store)
@@ -145,17 +177,8 @@ class GenericBrowser(app.UIScreen):
         return urwid.Padding(self.body, width = w - 2, align = "center")
 
     def input(self, key):
-        if key in self.KEYS and self.KEYS[key][2](self):
-            widget, id = self.walker.get_focus()
-            w = getattr(self, self.KEYS[key][1])(widget, id)
-            if w == self.REFRESH:
-                self.app.switch_screen(self)
-                return True
-            elif w is None:
-                return True
-            else:
-                self.app.switch_screen_with_return(w)
-                return True
+        if GenericInterface.input(self, key) == True:
+            return True
 
         elif self.SORT:
             try:
@@ -185,9 +208,6 @@ class GenericBrowser(app.UIScreen):
         if self.search:
             p.append(_(u"which contain '%s'") % self.search)
         return u" ".join(p)
-
-    def select(self, widget, id):
-        pass
 
     @property
     def content(self, args=None):
@@ -219,7 +239,7 @@ class GenericSelector(GenericBrowser):
     ACTION = None
     KEYS = GenericBrowser.KEYS + {
         "a": (_(u"add new"), "add", lambda s: True),
-        "d": (_(u"delete"), "remove", lambda s: True),
+        "d": (_(u"delete"), "remove", lambda s: True)
         }
 
     def remove(self, widget, id):
