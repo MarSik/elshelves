@@ -367,6 +367,7 @@ urwid.Edit.save = save
 
 edit.EmacsIntEdit.save = valuesave
 edit.DateEdit.save = valuesave
+edit.FloatEdit.save = valuesave
 
 urwid.CheckBox.bind = bind
 urwid.CheckBox.bind_live = bind_live
@@ -401,5 +402,3 @@ def CheckBox(label, content, *args, **kwargs):
 
 def Text(label, content, *args, **kwargs):
     return urwid.Text(u"%s%s" % (label, content), *args, **kwargs)
-
-

@@ -192,40 +192,33 @@ class PartSelector(app.UIScreen):
     def _entry(self, p):
         header = urwid.AttrWrap(urwid.Text(_(u"New part type")), "part")
         line1 = urwid.Columns([
-            ("fixed", 10, urwid.Text(_(u"name"))),
+            ("fixed", 12, urwid.Text(_(u"name"))),
             self._a(Edit(u"", p.name or p.search_name)
                     .bind(p, "name").reg(self._save)),
             ("fixed", 10, urwid.Text(_(u"footprint"))),
             ("fixed", 10, self._a(Edit(u"", p.footprint)
                                   .bind(p, "footprint").reg(self._save)))
-            ], 3)
+            ], 1)
         line2 = urwid.Columns([
-            ("fixed", 10, urwid.Text(_(u"summary"))),
+            ("fixed", 12, urwid.Text(_(u"summary"))),
             self._a(Edit(u"", p.summary).bind(p, "summary")
                     .reg(self._save)),
             ("fixed", 10, urwid.Text(_(u"pins"))),
             ("fixed", 10, self._a(IntEdit(u"", unicode(p.pins), align = "right")
                                   .bind(p, "pins").reg(self._save)))
-            ], 3)
+            ], 1)
 
         line3_content = [
-            ("fixed", 10, urwid.Text(_(u"manufacturer"))),
+            ("fixed", 12, urwid.Text(_(u"manufacturer"))),
             self._a(Edit(u"", p.manufacturer).bind(p, "manufacturer")
                     .reg(self._save)) ]
 
-        if p.source:
-            line3_content.extend([
-            ("fixed", 10, urwid.Text(_(u"sku"))),
-            ("fixed", 10, self._a(Edit(u"", p.sku).bind(p, "sku")
-                                      .reg(self._save)))
-                                      ])
-
-        line3 = urwid.Columns(line3_content, 3)
+        line3 = urwid.Columns(line3_content, 1)
         line4 = urwid.Columns([
-            ("fixed", 10, urwid.Text(_(u"datasheet"))),
+            ("fixed", 12, urwid.Text(_(u"datasheet"))),
             self._a(Edit(u"", p.datasheet).bind(p, "datasheet")
                     .reg(self._save)),
-            ], 3)
+            ], 1)
         desc_title = urwid.Text(_(u"description"))
         desc = self._a(Edit(u"", p.description, multiline=True)
                        .bind(p, "description").reg(self._save))
@@ -252,35 +245,44 @@ class PartSelector(app.UIScreen):
         else:
             date = _(u"-today-")
 
-        cols = [
-            ("weight", 2, urwid.Text(p.search_name)),
-            urwid.Text(date)
+        cols_1 = [
+            ("fixed", 2*len("%d" % len(self._partlist))+3, urwid.Text(u"[%d/%d]" %
+                                          (self._current + 1, len(self._partlist)))),
+
+            ("fixed", len(date), urwid.Text(date)),
+            ("weight", 1, urwid.Text(p.search_name)),
+            ("fixed", 6, urwid.Text(_(u"count:"))),
+            ("fixed", 5, self._a(IntEdit(u"", p.count, align = "right").bind(p, "count")
+                                 .reg(self._save)))
             ]
 
+
+        cols_2 = []
+
         if p.source:
-            cols.extend([
-                ("fixed", len(p.source.name), urwid.Text(p.source.name)),
+            cols_2.extend([
+                ("weight", 1, urwid.Text(p.source.name)),
+                ("fixed", 4, urwid.Text(_(u"sku:"))),
+                ("fixed", 10, self._a(Edit(u"", p.sku).bind(p, "sku")
+                                      .reg(self._save))),
                 ("fixed", 6, urwid.Text(_(u"price:"))),
-                self._a(FloatEdit(u"", p.unitprice, align = "right", allow_none = True).bind(p, "unitprice")
-                        .reg(self._save)),
+                ("fixed", 6, self._a(FloatEdit(u"", p.unitprice, align = "right", allow_none = True).bind(p, "unitprice")
+                                     .reg(self._save))),
                 ("fixed", 4, urwid.Text(_(u"vat:"))),
-                self._a(FloatEdit(u"", p.vat, align = "right", allow_none = True).bind(p, "vat")
-                        .reg(self._save))
+                ("fixed", 5, self._a(FloatEdit(u"", p.vat, align = "right", allow_none = True).bind(p, "vat")
+                                     .reg(self._save)))
                 ])
 
-        cols.extend([
-            ("fixed", 6, urwid.Text(_(u"count"))),
-            self._a(IntEdit(u"", p.count, align = "right").bind(p, "count")
-                    .reg(self._save)),
-            ("weight", 1, urwid.Text(u"[%d/%d]" %
-                                     (self._current + 1, len(self._partlist))))
-            ])
+        pile_content = [ urwid.Columns(cols_1, 1) ]
+        if cols_2:
+            pile_content.append(urwid.Columns(cols_2, 1))
 
-        return urwid.AttrWrap(urwid.Columns(cols, 1), "part")
+        return urwid.AttrWrap(urwid.Pile(pile_content), "part")
 
     def show(self, args=None):
         if len(self._partlist) == 0:
             self.back()
+            return
 
         if args is None or args >= len(self._partlist):
             args = 0
@@ -424,11 +426,11 @@ class SearchForParts(app.UIScreen):
         w = urwid.Columns([
             ("weight", 2, urwid.Text(_(u"name"))),
             ("fixed", 10, urwid.Text(_(u"footprint"))),
-            ("weight", 1, urwid.Text(_(u"manufacturer"))),
+            ("fixed", 12, urwid.Text(_(u"manufacturer"))),
             ("fixed", 10, urwid.Text(_(u"sku"))),
             ("fixed", 6, urwid.Text(_(u"count"))),
             ("fixed", 6, urwid.Text(_(u"price"))),
-            ], 3)
+            ], 1)
 
         buttons = urwid.Columns([
             ("fixed", 16, Button(_(u"Add line"), self.add)),
@@ -448,11 +450,11 @@ class SearchForParts(app.UIScreen):
         w = urwid.Columns([
             ("weight", 2, p(Edit(u"", s.search_name).bind(s, "search_name").reg(self._save))),
             ("fixed", 10, p(Edit(u"", s.footprint).bind(s, "footprint").reg(self._save))),
-            ("weight", 1, p(Edit(u"", s.manufacturer).bind(s, "manufacturer").reg(self._save))),
+            ("fixed", 12, p(Edit(u"", s.manufacturer).bind(s, "manufacturer").reg(self._save))),
             ("fixed", 10, p(Edit(u"", s.sku).bind(s, "sku").reg(self._save))),
             ("fixed", 6, p(IntEdit(u"", unicode(s.count), align = "right").bind(s, "count").reg(self._save))),
             ("fixed", 6, p(FloatEdit(u"", unicode(s.unitprice)).bind(s, "unitprice").reg(self._save))),
-            ], 3)
+            ], 1)
         w._data = s
         return w
 
