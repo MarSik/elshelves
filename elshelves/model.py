@@ -233,6 +233,7 @@ class Part(Storm):
         take.source = self.source
         take.date = self.date
         take.price = self.price
+        take.vat = self.vat
         take.part_type = self.part_type
         take.assignment = self.assignment
         take.history = self.history
