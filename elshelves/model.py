@@ -433,9 +433,13 @@ def fill_matches(store, data):
             args.append(PartSource.source == source)
 
         # do not filter by source unless we are also checking for sku
-        parts.append(list(store.find(PartSource, *args)
-                     .config(distinct = True)
-                     .values(PartSource.part_type_id)))
+        result = list(store.find(PartSource, *args)
+                           .config(distinct = True)
+                           .values(PartSource.part_type_id))
+
+        # do not filter by sku if no such vendor/sku was found - we might be shopping somewhere else now
+        if result:
+            parts.append(result)
 
     if manufacturer:
         parts.append(list(store.find(PartType, Or(PartType.manufacturer == u"",
