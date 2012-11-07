@@ -344,31 +344,42 @@ class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-def RawPart(extra = None):
-    p = {
-        "part_type": None,
-        "search_name": u"",
-        "name": u"",
-        "summary": u"",
-        "description": u"",
-        "footprint": u"",
-        "pins": 0,
-        "manufacturer": u"",
-        "sku": u"",
-        "count": 0,
-        "date": None,
-        "unitprice": 0,
-        "vat": None,
-        "source": None,
-        "datasheet": u"",
-        "matches": []
-        }
+class RawPart(Struct):
+    def __init__(self, extra = None):
+        p = {
+            "part_type": None,
+            "search_name": u"",
+            "name": u"",
+            "summary": u"",
+            "description": u"",
+            "footprint": u"",
+            "pins": 0,
+            "manufacturer": u"",
+            "sku": u"",
+            "count": 0,
+            "date": None,
+            "unitprice": 0,
+            "vat": None,
+            "source": None,
+            "datasheet": u"",
+            "matches": []
+            }
 
-    if extra:
-        p.update(extra)
+        if extra:
+            p.update(extra)
 
-    return Struct(**p)
+        Struct.__init__(self, **p)
 
+    def load(self, part_type):
+        self.__dict__.update({
+            "name": part_type.name,
+            "summary": part_type.summary,
+            "description": part_type.description,
+            "footprint": part_type.footprint.name,
+            "pins": part_type.pins,
+            "manufacturer": part_type.manufacturer,
+            "datasheet": part_type.datasheet
+            })
 
 class Meta(Storm):
     """Model for many to many relationship between Source and PartType"""

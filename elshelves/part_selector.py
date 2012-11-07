@@ -338,6 +338,8 @@ class PartSelector(app.UIScreen):
         else:
             buttons.append(Button(_(u"Back"), lambda a: self.back()))
 
+        if part.part_type and self._create_new:
+            buttons.append(Button(_(u"Modify"), self.modify))
 
         if args < len(self._partlist) - 1:
             buttons.append(Button(_(u"Next"), self.next))
@@ -386,6 +388,11 @@ class PartSelector(app.UIScreen):
 
         a = self._action(self.app, self.store, self._partlist, back = self, **self._action_kwargs)
         self.app.switch_screen(a)
+
+    def modify(self, signal, args=None):
+        self._partlist[self._current].load(self._partlist[self._current].part_type)
+        self._partlist[self._current].part_type = None
+        self.app.switch_screen(self, self._current)
 
     def input(self, key):
         if key == "enter":
