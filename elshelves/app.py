@@ -4,35 +4,8 @@ import urwid.web_display
 import weakref
 import re
 import edit
-
-class Dialog(urwid.WidgetWrap):
-    def __init__(self, app, contents):
-        self.__super.__init__(contents)
-        self._result = None
-        self._app = app
-
-    @property
-    def app(self):
-        return self._app
-
-    def pre_open(self):
-        self._result = None
-
-    @property
-    def result(self):
-        return self._result
-
-    def ok(self):
-        pass
-
-    def cancel(self):
-        pass
-
-    def close(self):
-        raise urwid.ExitMainLoop()
-
-    def dialog_size(self):
-        raise Exception("Mus be implemented in subclass")
+from dialog import Dialog
+from confirm_dialog import ConfirmDialog
 
 class PopUpEnabledFrame(urwid.PopUpLauncher):
     def __init__(self, original_widget):
@@ -250,6 +223,8 @@ class App(object):
 
 
 class UIScreen(object):
+    CONFIRM_CLOSE = None
+
     def __init__(self, app, store, back = None, back_args = None):
         self._app = app
         self._store = store
@@ -266,7 +241,7 @@ class UIScreen(object):
                 back_args = self._back_args
             else:
                 back_args = args
-            self.app.switch_screen(self._back, back_args)
+            self.confirm(self.app.switch_screen, self._back, back_args)
         else:
             self.close()
 
@@ -283,8 +258,19 @@ class UIScreen(object):
     def app(self):
         return self._app
 
+    def confirm(self, cb, *args, **kwargs):
+        if self.CONFIRM_CLOSE:
+            confirmdlg = ConfirmDialog(self.app, _("Confirm close"),
+                                _(self.CONFIRM_CLOSE),
+                                yes = "Close", no = "Keep open")
+
+            if self.app.run_dialog(confirmdlg):
+              return cb(*args, **kwargs)
+        else:
+            return cb(*args, **kwargs)
+
     def close(self):
-        self.app.close_screen(self)
+        self.confirm(self.app.close_screen)
 
     @property
     def footer(self):

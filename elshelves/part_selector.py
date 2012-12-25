@@ -421,6 +421,8 @@ class PartSelector(app.UIScreen):
 
 
 class SearchForParts(app.UIScreen):
+    CONFIRM_CLOSE = "Do you really want to close this screen? You will loose all the data you have entered."
+
     def __init__(self, a, store, back=None, action=None,
                  action_kwargs={}, selector=PartSelector, parts = [], extra=None):
         app.UIScreen.__init__(self, a, store, back)
@@ -498,7 +500,7 @@ class SearchForParts(app.UIScreen):
         if key == "f8":
             self.delete(self.walker, self.walker.get_focus())
         else:
-            return key
+            return app.UIScreen.input(self, key)
 
     @property
     def parts(self):
