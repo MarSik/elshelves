@@ -45,17 +45,19 @@ class PartBrowser(GenericBrowser):
         (_(u"sld"), "fixed", 3, "soldered")
         ]
 
-    def __init__(self, a, store, assignment = None, part_type = None, unusable = False):
+    def __init__(self, a, store, assignment = None, part_type = None, unusable = False, assigned = False):
         GenericBrowser.__init__(self, a, store)
         self._assignment = assignment
         self._part_type = part_type
         self._unusable = unusable
+        self._assigned = False
 
     @property
     def conditions(self):
-        conds = [model.Or(self.MODEL.usable, self.MODEL.usable != self._unusable),
-                 model.Or(self.MODEL.assignment == self._assignment,
-                          self.MODEL.assignment == None)]
+        conds = [model.Or(self.MODEL.usable, self.MODEL.usable != self._unusable)]
+        if not self._assigned:
+            conds.append(model.Or(self.MODEL.assignment == self._assignment,
+                                  self.MODEL.assignment == None))
         if self._assignment:
             conds.append(self.MODEL.part_type == self._assignment.part_type)
         if self._part_type:
@@ -95,7 +97,7 @@ class PartEditor(GenericEditor):
 
     def __init__(self, a, store, item = None, caller = None):
         GenericEditor.__init__(self, a, store, item, caller)
-        self._browser = PartBrowser(a, store, part_type = item)
+        self._browser = PartBrowser(a, store, part_type = item, assigned = True)
 
     def details(self, args = None):
         def _decorate_from(o, where_from):
@@ -115,10 +117,11 @@ class Browser(GenericBrowser):
     FIELDS = [
         (_(u"name"), "fixed", 15, "name"),
         (_(u"summary"), "weight", 1, "summary"),
-        (_(u"manufacturer"), "weight", 1, "manufacturer"),
+        (_(u"manuf."), "weight", 1, "manufacturer"),
         (_(u"pins"), "fixed", 6, "pins"),
         (_(u"footprint"), "fixed", 10, "footprint.name"),
-        (_(u"count"), "fixed", 6, "count")
+        (_(u"total"), "fixed", 6, "count_w_assigned"),
+        (_(u"free"), "fixed", 6, "count")
         ]
     EDITOR = PartEditor
 

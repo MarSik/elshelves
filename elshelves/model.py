@@ -145,8 +145,21 @@ class PartType(Storm):
         if not Store.of(self):
             return 0
 
-        return Store.of(self).find(Part, Part.part_type_id == self.id, Part.assignment == None, Part.usable == True).sum(Part.count) or 0
+        return self.find_all.find(Part.assignment == None, Part.soldered == False).sum(Part.count) or 0
 
+    @property
+    def count_w_assigned(self):
+        """get the count of all components with this type"""
+        if not Store.of(self):
+            return 0
+
+        return self.find_all.find(Part.soldered == False).sum(Part.count) or 0
+
+
+    @property
+    def find_all(self):
+        """get the list of all usable components with this type"""
+        return Store.of(self).find(Part, Part.part_type_id == self.id, Part.usable == True)
 
 class Location(Storm):
     """Model for locations"""
