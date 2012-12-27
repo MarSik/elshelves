@@ -104,13 +104,13 @@ CREATE TABLE assignments (
        count integer not null
 );
 
-
 CREATE TABLE parts (
        id integer PRIMARY KEY autoincrement,
        count integer not null check (count > 0),
        source_id integer references sources (id) on delete restrict on update cascade,
        date datetime not null default CURRENT_DATE,
        price float,
+       vat float,
        part_type_id integer not null references types (id) on delete restrict on update cascade,
        assignment_id integer references assignments (id) on delete set null on update cascade,
        history_id references history (id) on delete restrict on update cascade,
