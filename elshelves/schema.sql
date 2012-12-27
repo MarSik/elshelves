@@ -25,8 +25,8 @@ CREATE TABLE footprints (
        name varchar not null unique check (length(name)),
        summary varchar,
        description varchar,
-       smd integer,
        pins integer,
+       holes integer,
        kicad varchar
 );
 

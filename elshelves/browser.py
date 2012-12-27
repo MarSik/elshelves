@@ -3,7 +3,7 @@
 import app
 import model
 import urwid
-from app import Edit, IntEdit, Text
+from app import Edit, IntEdit, Text, CheckBox
 from selector import GenericBrowser, GenericEditor
 
 class HistoryBrowser(GenericBrowser):
@@ -127,3 +127,46 @@ class Browser(GenericBrowser):
 
     def select(self, widget, id):
         return PartEditor(self.app, self.store, item = widget._data, caller = self)
+
+class FootprintEditor(GenericEditor):
+    MODEL = model.Footprint
+    FIELDS = [
+        (_(u"name"), "name", Edit, {}, u""),
+        (_(u"kicad"), "kicad", Edit, {}, u""),
+        (_(u"summary"), "summary", Edit, {}, u""),
+        (_(u"pins"), "pins", IntEdit, {}, u""),
+        (_(u"holes"), "holes", IntEdit, {}, u""),
+        (_(u"description"), "description", Edit, {"multiline": True}, u"")
+        ]
+
+class FootprintBrowser(GenericBrowser):
+    MODEL = model.Footprint
+    EDITOR = FootprintEditor
+    FIELDS = [
+        (_(u"name"), "fixed", 10, "name"),
+        (_(u"kicad"), "fixed", 10, "kicad"),
+        (_(u"summary"), "weight", 1, "summary"),
+        (_(u"holes"), "fixed", 5, "holes"),
+        (_(u"pins"), "fixed", 4, "pins")
+        ]
+
+    def __init__(self, a, store, part_type = None):
+        GenericBrowser.__init__(self, a, store)
+        self._part_type = part_type
+
+    @property
+    def conditions(self):
+        conds = []
+        if self._part_type:
+            conds.append(model.PartType.footprint == self)
+        return conds
+
+    def select(self, widget, id):
+        return HistoryBrowser(self.app, self.store, history = widget._data.history)
+
+    @property
+    def title(self):
+        s = _("Footprints")
+        if self._part_type:
+            s = _(u"Available footprints for type %s (%s)") % (self._part_type.name, self._part_type.manufacturer)
+        return s

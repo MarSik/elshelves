@@ -9,7 +9,7 @@ import sys
 from part_selector import SearchForParts, PartSelector, PartCreator
 from selector import GenericSelector, GenericEditor
 from project_selector import ProjectSelector
-from browser import Browser
+from browser import Browser, FootprintBrowser
 from app import Edit, FloatEdit, IntEdit, CheckBox, Button
 from amountdlg import DateDialog
 import datetime
@@ -31,7 +31,8 @@ class Actions(app.UIScreen):
         content = [
             Button(_(u"Add parts"), self._switch_screen, SourceSelector),
             Button(_(u"Use parts"), self._switch_screen, ProjectSelector),
-            Button(_(u"Browse parts"), self._switch_screen, Browser)
+            Button(_(u"Browse parts"), self._switch_screen, Browser),
+            Button(_(u"Browse footprints"), self._switch_screen, FootprintBrowser)
             ]
 
         self.body = urwid.Filler(urwid.Pile([

@@ -25,8 +25,8 @@ class Footprint(Storm):
     summary = Unicode()
     description = Unicode()
 
-    smd = Bool()
     pins = Int()
+    holes = Int() # no. of connected+unconnected holes to PCB
     kicad = Unicode() # formatting string using %d to be replaced by the number of pins from part
 
     def __str__(self):
