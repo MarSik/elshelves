@@ -17,6 +17,19 @@ import datetime
 class SearchBrowser(Browser):
     SEARCH_FIELDS = Browser.SEARCH_FIELDS + ["manufacturer"]
 
+    @property
+    def conditions(self):
+        conds = []
+
+        if self.search:
+            search_terms = [self.MODEL.id == part_type.id
+                            for part_type in model.Term.search(self.store, self.search)]
+            # if no item was found, show everything
+            if search_terms:
+                conds.append(model.Or(search_terms))
+        return conds
+
+
 class Actions(app.UIScreen):
     def __init__(self, app_inst, store):
         app.UIScreen.__init__(self, app_inst, store)

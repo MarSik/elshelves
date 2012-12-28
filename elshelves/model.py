@@ -4,6 +4,7 @@ from storm.databases.sqlite import SQLite
 from storm.database import register_scheme
 import os.path
 import datetime
+import unicodedata
 
 SortableBase = PropertyColumn
 
@@ -129,8 +130,15 @@ class PartType(Storm):
     def __str__(self):
         return "<PartType id:%d name:%s pins:%d footprint:%s>" % (self.id,
                                                                   self.name,
-                                                                  self.pins,
+                                                                  self.footprint.pins,
                                                                   self.footprint)
+
+    # This hook should reregister search terms after the Model is changed
+    # but it is not working due to some strange error in Storm
+    # so I am disabling it for now
+    #def __storm_pre_flushed__(self):
+    #    # update search term database after the change is flushed
+    #    Term.register(self)
 
     @property
     def price(self):
@@ -351,6 +359,110 @@ class Assignment(Storm):
         pile = part_pile.take(count)
         pile.assignment = self
 
+class TermTypeMapping(Storm):
+    __storm_table__ = "terms_types"
+    __storm_primary__ = "term_id", "type_id"
+    term_id = Int()
+    term = Reference(term_id, "Term.id")
+    type_id = Int()
+    type = Reference(type_id, PartType.id)
+
+class Term(Storm):
+    """Model for search term mapping."""
+    __storm_table__ = "terms"
+
+    id = Int(primary=True)
+    term = Unicode()
+    alias_for_id = Int()
+    alias_for = Reference(alias_for_id, "Term.id")
+    part_types = ReferenceSet(id, TermTypeMapping.term_id, TermTypeMapping.type_id, PartType.id)
+
+    @staticmethod
+    def split(word):
+        return word.split()
+
+    @staticmethod
+    def simplify(word):
+        """Strips diacritics from unicode string"""
+        word = ''.join((c for c in unicodedata.normalize('NFD', word) if unicodedata.category(c) != 'Mn'))
+        return word.lower()
+
+    @classmethod
+    def register(cls, part_type):
+        store = Store.of(part_type)
+        name = cls.split(part_type.name)
+        summary = cls.split(part_type.summary)
+        description = cls.split(part_type.description)
+        manufacturer = cls.split(part_type.manufacturer)
+        terms = []
+
+        # register the search terms
+        for word in name + summary + description + manufacturer:
+            word = cls.simplify(word)
+
+            term = store.find(Term, term=word).any()
+            if term is None:
+                term = Term()
+                term.term = word
+                store.add(term)
+            else:
+                while term.alias_for:
+                    term = term.alias_for
+
+            if part_type not in term.part_types:
+                term.part_types.add(part_type)
+
+            terms.append(term)
+
+        terms = set(terms)
+
+        # remove stale search terms for updated object
+        # skip for new object
+        if part_type.id:
+            mappings = store.find(TermTypeMapping, type=part_type)
+            for mapping in mappings:
+                if mapping.term not in terms:
+                    store.remove(mapping)
+
+        return terms
+
+    @staticmethod
+    def search(store, search_string):
+        results = set()
+        first_result = True
+        negate_list = []
+
+        for w in Term.split(search_string):
+            if w.startswith("-"):
+                w = w[1:]
+                negate = True
+            else:
+                negate = False
+
+            w = Term.simplify(w).lower()
+
+            terms = store.find(Term, Term.term.like("%%%s%%" % w))
+            intermediate_result = set()
+            for term in terms:
+                intermediate_result.update(set(term.part_types))
+                while term.alias_for:
+                    term = term.alias_for
+                    intermediate_result.update(set(term.part_types))
+
+            if not negate:
+                if first_result:
+                    results = intermediate_result
+                    first_result = False
+                else:
+                    results.intersection_update(intermediate_result)
+            else:
+                negate_list.append(intermediate_result)
+
+        for neg in negate_list:
+            results.difference_update(neg)
+
+        return results
+
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -439,15 +551,18 @@ def fill_matches(store, data):
     source = data.source
 
     parts = []
+    #if search_name:
+    #    name_parts = search_name.split()
+    #    for name_part in name_parts:
+    #        parts.append(list(store.find(PartType, Or(
+    #                        PartType.name.like("%%%s%%" % name_part, "$", False),
+    #                        PartType.summary.like("%%%s%%" % name_part, "$", False),
+    #                        PartType.description.like("%%%s%%" % name_part, "$", False)))
+    #                     .config(distinct = True)
+    #                     .values(PartType.id)))
+
     if search_name:
-        name_parts = search_name.split()
-        for name_part in name_parts:
-            parts.append(list(store.find(PartType, Or(
-                            PartType.name.like("%%%s%%" % name_part, "$", False),
-                            PartType.summary.like("%%%s%%" % name_part, "$", False),
-                            PartType.description.like("%%%s%%" % name_part, "$", False)))
-                         .config(distinct = True)
-                         .values(PartType.id)))
+        parts.append([part_type.id for part_type in Term.search(store, search_name)])
 
     if sku:
         args = [ PartSource.sku.like("%s%%" % sku, "$", False) ]

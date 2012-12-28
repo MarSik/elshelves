@@ -6,7 +6,7 @@ CREATE TABLE meta (
        changed timestamp default CURRENT_TIMESTAMP
 );
 
-INSERT INTO meta (key, value) VALUES ("version", "0.0.2");
+INSERT INTO meta (key, value) VALUES ("version", "0.1.0");
 
 CREATE TABLE sources (
        id integer PRIMARY KEY autoincrement,
@@ -95,6 +95,21 @@ CREATE TABLE types (
        footprint_id integer not null references footprints (id) on delete restrict on update cascade,
        datasheet varchar,
        manufacturer varchar
+);
+
+CREATE TABLE terms_types (
+       term_id integer not null references terms (id) on delete cascade on update cascade,
+       type_id integer not null references types (id) on delete cascade on update cascade
+);
+
+CREATE INDEX term_mapping on terms_types (term_id);
+
+CREATE UNIQUE INDEX term_type_mapping on terms_types (term_id, type_id);
+
+CREATE TABLE terms (
+       id integer not null PRIMARY KEY autoincrement,
+       term varchar not null UNIQUE check (length(term)),
+       alias_for_id integer references terms (id) on delete restrict on update cascade
 );
 
 CREATE TABLE assignments (
