@@ -30,9 +30,9 @@ class Footprint(Storm):
     kicad = Unicode() # formatting string using %d to be replaced by the number of pins from part
 
     def __str__(self):
-        return "<Footprint id:%d name:%s smd:%s pins:%d>" % (self.id,
+        return "<Footprint id:%d name:%s holes:%s pins:%d>" % (self.id,
                                                              self.name,
-                                                             str(self.smd),
+                                                             self.holes,
                                                              self.pins)
 
 class Price(Storm):
@@ -119,8 +119,6 @@ class PartType(Storm):
     summary = Unicode(default=u"pokus")
     description = Unicode()
 
-
-    pins = Int()
     footprint_id = Int()
     footprint = Reference(footprint_id, Footprint.id)
     sources = ReferenceSet(id, PartSource.part_type_id)
