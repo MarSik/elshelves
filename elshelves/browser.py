@@ -82,12 +82,13 @@ class PartBrowser(GenericBrowser):
         return s
 
 class PartEditor(GenericEditor):
-    MODEL = model.Part
+    MODEL = model.PartType
     FIELDS = [
         (_(u"Name: "), "name", Edit, {}, u""),
         (_(u"Manufacturer: "), "manufacturer", Edit, {}, u""),
         (_(u"Summary: "), "summary", Edit, {}, u""),
-        (_(u"Pins: "), "pins", IntEdit, {}, u""),
+        (_(u"Pins: "), "footprint.pins", Text, {}, u""),
+        (_(u"Holes: "), "footprint.holes", Text, {}, u""),
         (_(u"Footprint: "), "footprint.name", Text, {}, u""),
         (_(u"Datasheet: "), "datasheet", Edit, {}, u""),
         (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
@@ -118,7 +119,7 @@ class Browser(GenericBrowser):
         (_(u"name"), "fixed", 15, "name"),
         (_(u"summary"), "weight", 1, "summary"),
         (_(u"manuf."), "weight", 1, "manufacturer"),
-        (_(u"pins"), "fixed", 6, "pins"),
+        (_(u"pins"), "fixed", 6, "footprint.pins"),
         (_(u"footprint"), "fixed", 10, "footprint.name"),
         (_(u"total"), "fixed", 6, "count_w_assigned"),
         (_(u"free"), "fixed", 6, "count")
