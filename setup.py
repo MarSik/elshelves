@@ -1,5 +1,6 @@
 import os
 from setuptools import setup
+from elshelves.version import __version__
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -10,7 +11,7 @@ def read(fname):
 
 setup(
     name = "elShelves",
-    version = "0.0.0",
+    version = __version__,
     author = "Martin Sivak",
     author_email = "mars@montik.net",
     description = ("Electronic warehouse tracking app."),
