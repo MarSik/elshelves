@@ -7,7 +7,7 @@ import app
 import sys
 
 from part_selector import SearchForParts, PartSelector, PartCreator
-from selector import GenericSelector, GenericEditor
+from generics import GenericSelector, GenericEditor
 from project_selector import ProjectSelector
 from browser import Browser, FootprintBrowser
 from app import Edit, FloatEdit, IntEdit, CheckBox, Button

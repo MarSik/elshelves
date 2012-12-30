@@ -3,7 +3,7 @@
 import app
 import urwid
 import model
-from selector import GenericSelector, GenericEditor
+from generics import GenericSelector, GenericEditor
 from part_selector import SearchForParts, PartCreator
 from browser import PartBrowser
 from app import Edit, IntEdit, CheckBox, Button

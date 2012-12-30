@@ -4,7 +4,7 @@ import app
 import model
 import urwid
 from app import Edit, IntEdit, Text, CheckBox
-from selector import GenericBrowser, GenericEditor
+from generics import GenericBrowser, GenericEditor
 
 class HistoryBrowser(GenericBrowser):
     MODEL = None
