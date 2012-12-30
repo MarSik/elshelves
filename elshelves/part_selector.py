@@ -280,7 +280,7 @@ class PartSelector(app.UIScreen):
         if cols_2:
             pile_content.append(urwid.Columns(cols_2, 1))
 
-        return urwid.AttrWrap(urwid.Pile(pile_content), "part")
+        return [urwid.AttrWrap(urwid.Pile(pile_content), "part")]
 
     def show(self, args=None):
         if len(self._partlist) == 0:
@@ -326,8 +326,9 @@ class PartSelector(app.UIScreen):
         #sort the content so the selected part is on top
         head_part = filter(lambda p: p._data == part.part_type, existing_parts)
         if head_part:
-            pile = self._h(urwid.Pile([
-                self._header(part),
+            pile = self._h(urwid.Pile(
+                self._header(part) +
+                [
                 head_part[0]
                 ]))
             pile._data = head_part[0]._data

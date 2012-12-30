@@ -145,7 +145,7 @@ class GenericBrowser(GenericInterface):
 
     def _header(self):
         w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
-        return w
+        return [w]
 
     def _entry(self, s):
         p = lambda w: urwid.AttrMap(w, "body", "list_f")
@@ -167,7 +167,7 @@ class GenericBrowser(GenericInterface):
 
     def show(self, args = None):
         self.order_by = args
-        listbox_content = [self._header()] + [self._entry(p) for p in self.content]
+        listbox_content = self._header() + [self._entry(p) for p in self.content]
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')

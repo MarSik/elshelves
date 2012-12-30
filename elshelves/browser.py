@@ -105,7 +105,7 @@ class PartEditor(GenericEditor):
             o._from = where_from
             return o
 
-        return [urwid.Divider(u" "), self._browser._header()] + [_decorate_from(self._browser._entry(p), self._browser) for p in self._browser.content]
+        return [urwid.Divider(u" ")] + self._browser._header() + [_decorate_from(self._browser._entry(p), self._browser) for p in self._browser.content]
 
     def select(self, widget, id):
         if hasattr(widget, "_from"):
