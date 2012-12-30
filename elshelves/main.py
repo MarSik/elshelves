@@ -17,6 +17,16 @@ import datetime
 class SearchBrowser(Browser):
     SEARCH_FIELDS = Browser.SEARCH_FIELDS + ["manufacturer"]
 
+    def __init__(self, app_inst, store, search):
+        Browser.__init__(self, app_inst, store, search = search)
+        self._save = app.SaveRegistry()
+        self.search_field = app.Edit(u"", search).bind(self, "search").reg(self._save)
+        urwid.connect_signal(self.search_field, "enter", self.do_search)
+        self.search_field = urwid.AttrWrap(self.search_field, "edit", "edit_f")
+
+    def _header(self):
+        return [self.search_field, urwid.Divider(" ")] + Browser._header(self)
+
     @property
     def conditions(self):
         conds = []
@@ -24,11 +34,14 @@ class SearchBrowser(Browser):
         if self.search:
             search_terms = [self.MODEL.id == part_type.id
                             for part_type in model.Term.search(self.store, self.search)]
-            # if no item was found, show everything
-            if search_terms:
-                conds.append(model.Or(search_terms))
+            conds.append(model.Or(search_terms))
+
         return conds
 
+    def do_search(self, widget = None):
+        for w in self._save:
+            w.save()
+        self.app.switch_screen(self)
 
 class Actions(app.UIScreen):
     def __init__(self, app_inst, store):
