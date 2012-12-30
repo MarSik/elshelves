@@ -113,6 +113,10 @@ class PartEditor(GenericEditor):
         else:
             return False
 
+    def pre_commit_hook(self, item):
+        # update records in search term table
+        model.Term.register(item)
+
 class Browser(GenericBrowser):
     MODEL = model.PartType
     FIELDS = [

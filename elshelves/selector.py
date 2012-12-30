@@ -113,8 +113,13 @@ class GenericEditor(GenericInterface):
 
         if self.store.of(self._item) is None:
             self.store.add(self._item)
+
+        self.pre_commit_hook(self._item)
         self.store.commit()
         self.close()
+
+    def pre_commit_hook(self, item):
+        pass
 
 class GenericBrowser(GenericInterface):
     MODEL = None

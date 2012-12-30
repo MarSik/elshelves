@@ -63,6 +63,9 @@ class PartCreator(app.UIScreen):
         new_part_type.manufacturer = part.manufacturer
         store.add(new_part_type)
 
+        # update records in search term table
+        model.Term.register(new_part_type)
+
         return new_part_type
 
     def save(self):
