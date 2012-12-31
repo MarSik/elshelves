@@ -439,9 +439,19 @@ class Term(Storm):
             else:
                 negate = False
 
+            if w.startswith("\"") and w.endswith("\""):
+                exact = True
+                w = w[1:-1]
+            else:
+                exact = False
+
             w = Term.simplify(w).lower()
 
-            terms = store.find(Term, Term.term.like("%%%s%%" % w))
+            if exact:
+                terms = store.find(Term, term=w)
+            else:
+                terms = store.find(Term, Term.term.like("%%%s%%" % w))
+
             intermediate_result = set()
             for term in terms:
                 intermediate_result.update(set(term.part_types))
