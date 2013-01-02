@@ -24,8 +24,8 @@ class SearchBrowser(Browser):
         urwid.connect_signal(self.search_field, "enter", self.do_search)
         self.search_field = urwid.AttrWrap(self.search_field, "edit", "edit_f")
 
-    def _header(self):
-        return [self.search_field, urwid.Divider(" ")] + Browser._header(self)
+    def header(self, args = None):
+        return [self.search_field, urwid.Divider(" ")] + Browser.header(self)
 
     @property
     def conditions(self):

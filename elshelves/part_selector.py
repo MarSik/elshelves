@@ -242,7 +242,7 @@ class PartSelector(app.UIScreen):
     def _notfound(self, p):
         return urwid.Text(_(u"No part type found"))
 
-    def _header(self, p):
+    def header(self, p):
         if p.date:
             date = unicode(p.date.strftime("%Y-%m-%d"))
         else:
@@ -327,7 +327,7 @@ class PartSelector(app.UIScreen):
         head_part = filter(lambda p: p._data == part.part_type, existing_parts)
         if head_part:
             pile = self._h(urwid.Pile(
-                self._header(part) +
+                self.header(part) +
                 [
                 head_part[0]
                 ]))

@@ -10,8 +10,8 @@ from app import Edit, IntEdit, CheckBox, Button
 from amountdlg import AmountDialog
 
 class AssignmentPartSelector(PartBrowser):
-    EDITOR = True
     KEYS = PartBrowser.KEYS + {
+        "h": (_(u"history"), "history", PartBrowser.ALWAYS),
         "S": (_(u"solder"), "solder", PartBrowser.ALWAYS),
         "D": (_(u"desolder"), "desolder", PartBrowser.ALWAYS),
         "K": (_(u"kill"), "kill", PartBrowser.ALWAYS)
@@ -56,7 +56,10 @@ class AssignmentPartSelector(PartBrowser):
             self.store.commit()
             return self.REFRESH
 
-    def edit(self, widget, id):
+    # enter should allow changing the amount and we need to remap the history screen
+    history = PartBrowser.select
+
+    def select(self, widget, id):
         if self._assignment == widget._data.assignment:
             used = widget._data.count
         else:
@@ -158,6 +161,10 @@ class AssignmentSelector(GenericSelector):
         self._amdlg = AmountDialog(self.app, _(u"no. %s of %s") % (self._item.serial, self._item.project.name),
                                    _(u"How many parts are required?"),
                                    0)
+        self._item_editor = ItemEditor(a, store, item = item)
+
+    def header(self, args = None):
+        return self._item_editor.header() + self._item_editor.rows() + [urwid.Divider(" ")] + GenericSelector.header(self, args)
 
     @property
     def conditions(self):
@@ -225,6 +232,10 @@ class ItemSelector(GenericSelector):
     def __init__(self, a, store, project):
         GenericSelector.__init__(self, a, store)
         self._project = project
+        self._project_editor = ProjectEditor(a, store, item = project)
+
+    def header(self, args = None):
+        return self._project_editor.header() + self._project_editor.rows() + [urwid.Divider(" ")] + GenericSelector.header(self, args)
 
     @property
     def conditions(self):

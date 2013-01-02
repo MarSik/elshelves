@@ -101,11 +101,12 @@ class PartEditor(GenericEditor):
         self._browser = PartBrowser(a, store, part_type = item, assigned = True)
 
     def details(self, args = None):
-        def _decorate_from(o, where_from):
-            o._from = where_from
+        def _decorate_from(part_browser, o):
+            o = part_browser._entry(o)
+            o._from = part_browser
             return o
 
-        return [urwid.Divider(u" ")] + self._browser._header() + [_decorate_from(self._browser._entry(p), self._browser) for p in self._browser.content]
+        return [urwid.Divider(u" ")] + self._browser.header() + self._browser.rows(decorator = _decorate_from)
 
     def select(self, widget, id):
         if hasattr(widget, "_from"):

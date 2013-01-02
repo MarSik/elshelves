@@ -56,7 +56,7 @@ class GenericEditor(GenericInterface):
         (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
         ]
 
-    def __init__(self, a, store, item = None, caller = None):
+    def __init__(self, a, store, item = None, caller = None, save_closes = True):
         app.UIScreen.__init__(self, a, store)
         if item is None:
             item = self.MODEL()
@@ -67,12 +67,15 @@ class GenericEditor(GenericInterface):
         self._caller = caller
         self._item = item
         self._save = app.SaveRegistry()
+        self._save_closes = save_closes
 
     def details(self, args = None):
         return []
 
-    def show(self, args = None):
-        self._save.clear()
+    def header(self, args = None):
+        return []
+
+    def rows(self, args = None):
         listbox_content = []
 
         def _e(w):
@@ -97,6 +100,13 @@ class GenericEditor(GenericInterface):
             Button(_(u"Save"), self.save)
             ]
 
+        return listbox_content
+
+    def show(self, args = None):
+        self._save.clear()
+        listbox_content = []
+        listbox_content.extend(self.header(args))
+        listbox_content.extend(self.rows(args))
         listbox_content.extend(self.details(args))
 
         self.walker = urwid.SimpleListWalker(listbox_content)
@@ -116,7 +126,9 @@ class GenericEditor(GenericInterface):
 
         self.pre_commit_hook(self._item)
         self.store.commit()
-        self.close()
+
+        if self._save_closes:
+            self.close()
 
     def pre_commit_hook(self, item):
         pass
@@ -143,7 +155,10 @@ class GenericBrowser(GenericInterface):
         self.order_desc = False
         self.search = search
 
-    def _header(self):
+    def details(self, args = None):
+        return []
+
+    def header(self, args = None):
         w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
         return [w]
 
@@ -165,9 +180,15 @@ class GenericBrowser(GenericInterface):
         w._data = s
         return w
 
+    def rows(self, args = None, decorator = _entry):
+        return [decorator(self, p) for p in self.content]
+
     def show(self, args = None):
         self.order_by = args
-        listbox_content = self._header() + [self._entry(p) for p in self.content]
+        listbox_content = self.header(args)
+        listbox_content.extend(self.rows(args))
+        listbox_content.extend(self.details(args))
+
         self.walker = urwid.SimpleListWalker(listbox_content)
         listbox = urwid.ListBox(self.walker)
         self.body = urwid.AttrWrap(listbox, 'body')
