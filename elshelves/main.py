@@ -20,12 +20,11 @@ class SearchBrowser(Browser):
     def __init__(self, app_inst, store, search):
         Browser.__init__(self, app_inst, store, search = search)
         self._save = app.SaveRegistry()
-        self.search_field = app.Edit(u"", search).bind(self, "search").reg(self._save)
+        self.search_field = app.Edit(u"", search).bind(self, "search")
         urwid.connect_signal(self.search_field, "enter", self.do_search)
-        self.search_field = urwid.AttrWrap(self.search_field, "edit", "edit_f")
 
     def header(self, args = None):
-        return [self.search_field, urwid.Divider(" ")] + Browser.header(self)
+        return [urwid.AttrWrap(self.search_field.reg(self._save), "edit", "edit_f"), urwid.Divider(" ")] + Browser.header(self)
 
     @property
     def conditions(self):
