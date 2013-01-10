@@ -34,7 +34,10 @@ class SearchBrowser(Browser):
         if self.search:
             search_terms = [self.MODEL.id == part_type.id
                             for part_type in model.Term.search(self.store, self.search)]
-            conds.append(model.Or(search_terms))
+            if search_terms:
+                conds.append(model.Or(search_terms))
+            else:
+                conds.append(False)
 
         return conds
 
