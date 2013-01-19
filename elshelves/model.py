@@ -532,7 +532,7 @@ class ForeignKeysSQLite(SQLite):
 
     def raw_connect(self):
         connection = SQLite.raw_connect(self)
-        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("PRAGMA foreign_keys = ON;")
         return connection
 
 def getStore(url, create = False):
