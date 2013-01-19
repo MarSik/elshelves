@@ -22,6 +22,12 @@ class GenericInterface(app.UIScreen):
     ALWAYS = lambda self: True
     REFRESH = True
 
+    def __init__(self, a, store):
+        app.UIScreen.__init__(self, a, store)
+        self._save = app.SaveRegistry()
+        self.walker = None
+        self.focus = None
+
     def _val(self, s, name):
         for p in name.split("."):
             s = getattr(s, p)
@@ -29,6 +35,32 @@ class GenericInterface(app.UIScreen):
 
     def select(self, widget, id):
         pass
+
+    def details(self, args = None):
+        return []
+
+    def header(self, args = None):
+        return []
+
+    def rows(self, args = None):
+        return []
+
+    def show(self, args = None):
+        self._save.clear()
+        listbox_content = []
+        listbox_content.extend(self.header(args))
+        listbox_content.extend(self.rows(args))
+        listbox_content.extend(self.details(args))
+
+        self.walker = urwid.SimpleListWalker(listbox_content)
+        if self.focus:
+            self.walker.set_focus(self.focus)
+        listbox = urwid.ListBox(self.walker)
+        self.body = urwid.AttrWrap(listbox, 'body')
+
+        w,h = self.app.screen.get_cols_rows()
+
+        return urwid.Padding(self.body, width = w - 2, align = "center")
 
     def input(self, key):
         if key in self.KEYS and self.KEYS[key][2](self):
@@ -57,7 +89,7 @@ class GenericEditor(GenericInterface):
         ]
 
     def __init__(self, a, store, item = None, caller = None, save_closes = True):
-        app.UIScreen.__init__(self, a, store)
+        GenericInterface.__init__(self, a, store)
         if item is None:
             item = self.MODEL()
             item.name = u""
@@ -66,14 +98,7 @@ class GenericEditor(GenericInterface):
 
         self._caller = caller
         self._item = item
-        self._save = app.SaveRegistry()
         self._save_closes = save_closes
-
-    def details(self, args = None):
-        return []
-
-    def header(self, args = None):
-        return []
 
     def rows(self, args = None):
         listbox_content = []
@@ -102,20 +127,6 @@ class GenericEditor(GenericInterface):
 
         return listbox_content
 
-    def show(self, args = None):
-        self._save.clear()
-        listbox_content = []
-        listbox_content.extend(self.header(args))
-        listbox_content.extend(self.rows(args))
-        listbox_content.extend(self.details(args))
-
-        self.walker = urwid.SimpleListWalker(listbox_content)
-        listbox = urwid.ListBox(self.walker)
-        self.body = urwid.AttrWrap(listbox, 'body')
-
-        w,h = self.app.screen.get_cols_rows()
-
-        return urwid.Padding(self.body, width = w - 2, align = "center")
 
     def save(self, signal, args = None):
         for w in self._save:
@@ -150,13 +161,10 @@ class GenericBrowser(GenericInterface):
 
 
     def __init__(self, a, store, search = None):
-        app.UIScreen.__init__(self, a, store)
+        GenericInterface.__init__(self, a, store)
         self.order_by = None
         self.order_desc = False
         self.search = search
-
-    def details(self, args = None):
-        return []
 
     def header(self, args = None):
         w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
@@ -185,17 +193,7 @@ class GenericBrowser(GenericInterface):
 
     def show(self, args = None):
         self.order_by = args
-        listbox_content = self.header(args)
-        listbox_content.extend(self.rows(args))
-        listbox_content.extend(self.details(args))
-
-        self.walker = urwid.SimpleListWalker(listbox_content)
-        listbox = urwid.ListBox(self.walker)
-        self.body = urwid.AttrWrap(listbox, 'body')
-
-        w,h = self.app.screen.get_cols_rows()
-
-        return urwid.Padding(self.body, width = w - 2, align = "center")
+        return GenericInterface.show(self, args)
 
     def input(self, key):
         if GenericInterface.input(self, key) == True:
