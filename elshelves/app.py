@@ -387,4 +387,6 @@ def CheckBox(label, content, *args, **kwargs):
     return urwid.CheckBox(label, content, *args, **kwargs)
 
 def Text(label, content, *args, **kwargs):
+    if "multiline" in kwargs:
+        del kwargs["multiline"]
     return urwid.Text(u"%s%s" % (label, content), *args, **kwargs)
