@@ -294,6 +294,15 @@ class DateEdit(EmacsEdit):
 
         return self._caption + mask, self._attrib
 
+    def get_cursor_coords(self, maxsize):
+        x, y = EmacsEdit.get_cursor_coords(self, maxsize)
+        oldx = x
+        if oldx >= 4:
+            x = x + 1
+        if oldx >= 6:
+            x = x + 1
+        return x, y
+
     def render(self, size, focus=False):
         """
         Render edit widget and return canvas.  Include cursor when in
@@ -317,12 +326,6 @@ class DateEdit(EmacsEdit):
         if focus:
             canv = CompositeCanvas(canv)
             canv.cursor = self.get_cursor_coords((maxcol,))
-            x,y = canv.cursor
-            if canv.cursor[0] >= 4:
-                x = x + 1
-            if canv.cursor[0] >= 6:
-                x = x + 1
-            canv.cursor = x, y
 
         # .. will need to FIXME if I want highlight to work again
         #if self.highlight:
