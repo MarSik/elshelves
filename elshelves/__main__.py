@@ -17,6 +17,14 @@ def main():
     confdir = os.path.join(homedir, ".elshelves")
     dbfile = os.path.join(confdir, "elshelves.sqlite3")
 
+    parser = optparse.OptionParser()
+    parser.add_option("--importorg", action="store", default = None)
+    opts, args = parser.parse_args()
+
+    # let me use different database file
+    if args:
+        dbfile = args[0]
+
     try:
         os.makedirs(confdir)
     except OSError as e:
@@ -35,10 +43,6 @@ def main():
     a = app.App(text_header)
     actions_screen = Actions(a, store)
     a.switch_screen_with_return(actions_screen)
-
-    parser = optparse.OptionParser()
-    parser.add_option("--importorg", action="store", default = None)
-    opts, args = parser.parse_args()
 
     if opts.importorg:
         try:
