@@ -1,10 +1,9 @@
 # encoding: utf8
 
-import app
-import model
+from . import model
 import urwid
-from app import Edit, IntEdit, Text, FloatEdit, DateEdit, CheckBox
-from generics import GenericBrowser, GenericEditor
+from .app import Edit, IntEdit, Text, FloatEdit, DateEdit, CheckBox
+from .generics import GenericBrowser, GenericEditor
 
 class HistoryBrowser(GenericBrowser):
     MODEL = None
@@ -45,7 +44,8 @@ class PartBrowser(GenericBrowser):
         (_(u"sld"), "fixed", 3, "soldered")
         ]
 
-    def __init__(self, a, store, assignment = None, part_type = None, unusable = False, assigned = False):
+    def __init__(self, a, store, assignment = None, part_type = None,
+                 unusable = False, assigned = False):
         GenericBrowser.__init__(self, a, store)
         self._assignment = assignment
         self._part_type = part_type
@@ -54,7 +54,8 @@ class PartBrowser(GenericBrowser):
 
     @property
     def conditions(self):
-        conds = [model.Or(self.MODEL.usable, self.MODEL.usable != self._unusable)]
+        conds = [model.Or(self.MODEL.usable,
+                          self.MODEL.usable != self._unusable)]
         if not self._assigned:
             conds.append(model.Or(self.MODEL.assignment == self._assignment,
                                   self.MODEL.assignment == None))
@@ -66,15 +67,18 @@ class PartBrowser(GenericBrowser):
         return conds
 
     def select(self, widget, id):
-        return HistoryBrowser(self.app, self.store, history = widget._data.history)
+        return HistoryBrowser(self.app, self.store,
+                              history = widget._data.history)
 
     @property
     def title(self):
         s = _("Parts")
         if self._part_type:
-            s += _(u" of type %s (%s)") % (self._part_type.name, self._part_type.manufacturer)
+            s += _(u" of type %s (%s)") % (self._part_type.name,
+                                           self._part_type.manufacturer)
         elif self._assignment:
-            s += _(u" of type %s (%s)") % (self._assignment.part_type.name, self._assignment.part_type.manufacturer)
+            s += _(u" of type %s (%s)") % (self._assignment.part_type.name,
+                                           self._assignment.part_type.manufacturer)
 
         if self._assignment:
             s += _(u" assignable to no. %s in %s") % (self._assignment.item.serial,
@@ -106,7 +110,9 @@ class PartEditor(GenericEditor):
             o._from = part_browser
             return o
 
-        return [urwid.Divider(u" ")] + self._browser.header() + self._browser.rows(decorator = _decorate_from)
+        return [urwid.Divider(u" ")] + \
+               self._browser.header() + \
+               self._browser.rows(decorator = _decorate_from)
 
     def select(self, widget, id):
         if hasattr(widget, "_from"):
@@ -220,11 +226,13 @@ class FootprintBrowser(GenericBrowser):
         return conds
 
     def select(self, widget, id):
-        return HistoryBrowser(self.app, self.store, history = widget._data.history)
+        return HistoryBrowser(self.app, self.store,
+                              history = widget._data.history)
 
     @property
     def title(self):
         s = _("Footprints")
         if self._part_type:
-            s = _(u"Available footprints for type %s (%s)") % (self._part_type.name, self._part_type.manufacturer)
+            s = _(u"Available footprints for type %s (%s)") % (self._part_type.name,
+                                                               self._part_type.manufacturer)
         return s

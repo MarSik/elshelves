@@ -107,7 +107,7 @@ class PartSource(Storm):
     def price(self):
         cheapest = self.prices.order_by(Desc(Price.time)).order_by(Price.amount).any()
         if cheapest:
-            return price
+            return cheapest
         else:
             return 0.0
 
@@ -276,7 +276,7 @@ class Part(Storm):
         return "<Part id:%d type:%s count:%d manufacturer:%s>" % (self.id,
                                                                   self.part_type.name,
                                                                   self.count,
-                                                                  self.manufacturer)
+                                                                  self.part_type.manufacturer)
 
 class Project(Storm):
     """Model for project"""

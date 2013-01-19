@@ -164,14 +164,18 @@ class AssignmentSelector(GenericSelector):
         self._item_editor = ItemEditor(a, store, item = item)
 
     def header(self, args = None):
-        return self._item_editor.header() + self._item_editor.rows() + [urwid.Divider(" ")] + GenericSelector.header(self, args)
+        return self._item_editor.header() + \
+               self._item_editor.rows() + \
+               [urwid.Divider(" ")] + \
+               GenericSelector.header(self, args)
 
     @property
     def conditions(self):
         return [self.MODEL.item == self._item]
 
     def add(self, widget, id):
-        return SearchForParts(self.app, self.store, action = ItemAssigner, action_kwargs = {"item": self._item})
+        return SearchForParts(self.app, self.store, action = ItemAssigner,
+                              action_kwargs = {"item": self._item})
 
     def edit(self, widget, id):
         self._amdlg.value = widget._data.count
@@ -184,7 +188,8 @@ class AssignmentSelector(GenericSelector):
 
     def select(self, widget, id):
         # select the part pile to get parts from
-        return AssignmentPartSelector(self.app, self.store, assignment = widget._data)
+        return AssignmentPartSelector(self.app, self.store,
+                                      assignment = widget._data)
 
     @property
     def title(self):
@@ -235,7 +240,10 @@ class ItemSelector(GenericSelector):
         self._project_editor = ProjectEditor(a, store, item = project)
 
     def header(self, args = None):
-        return self._project_editor.header() + self._project_editor.rows() + [urwid.Divider(" ")] + GenericSelector.header(self, args)
+        return self._project_editor.header() + \
+               self._project_editor.rows() + \
+               [urwid.Divider(" ")] + \
+               GenericSelector.header(self, args)
 
     @property
     def conditions(self):

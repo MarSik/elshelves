@@ -34,7 +34,8 @@ def main():
     errlog = file(os.path.join(confdir, "error_log"), "w")
     model.debug(errlog)
 
-    store = model.getStore("sqlitefk:%s" % dbfile, create = not os.path.exists(dbfile))
+    store = model.getStore("sqlitefk:%s" % dbfile,
+                           create = not os.path.exists(dbfile))
 
     schema_version = store.get(model.Meta, u"version").value
 
@@ -53,9 +54,11 @@ def main():
                     continue
                 l = [i.strip() for i in l[1:].split("|", 7)]
 
-                source = store.find(model.Source, model.Source.name.like("%%%s%%" % l[3].decode("utf8"), "$", False)).one()
+                source = store.find(model.Source,
+                                    model.Source.name.like("%%%s%%" % l[3].decode("utf8"), "$", False)
+                                    ).one()
 
-                p = model.RawPart({
+                part = model.RawPart({
                     "search_name": l[0].decode("utf8"),
                     "count": int(l[1]),
                     "manufacturer": l[2].decode("utf8"),
@@ -64,7 +67,7 @@ def main():
                     "footprint": l[5].decode("utf8"),
                     "description": l[6].decode("utf8")
                     })
-                parts.append(p)
+                parts.append(part)
 
             dlg = SearchForParts(a, store,
                                  back=None, action=PartCreator,

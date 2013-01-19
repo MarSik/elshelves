@@ -11,8 +11,8 @@ class EmacsEdit(urwid.Edit):
 
     def keypress(self, size, key):
         if key == "ctrl k":
-            p = self.edit_pos
-            self.set_edit_text(self._edit_text[:p])
+            pos = self.edit_pos
+            self.set_edit_text(self._edit_text[:pos])
         elif key == "ctrl g":
             self.highlight = None
         elif key == "enter" and not self.multiline:
@@ -32,7 +32,7 @@ class FloatEdit(EmacsEdit):
         allowed = "0123456789.-+eE"
         if self.allow_nan:
             # allow "NaN", "nan", "Infinity", and "infinity"
-            allowed +="NnaIifty"
+            allowed += "NnaIifty"
         return len(ch)==1 and ch in allowed
 
     # note, this should probably be renamed "valid_result()", and the base
@@ -46,7 +46,7 @@ class FloatEdit(EmacsEdit):
         or at least a partial representation of a float
         """
 
-        future_result, future_col=self.insert_text_result(ch)
+        future_result, future_col = self.insert_text_result(ch)
 
         if not self.valid_charkey(ch):
             return False
@@ -84,7 +84,8 @@ class FloatEdit(EmacsEdit):
 
         return False
 
-    def __init__(self,caption="",default=None, allow_nan=True, allow_none = False):
+    def __init__(self, caption="", default=None, allow_nan=True,
+                 allow_none = False):
         """
         caption -- caption markup
         default -- default edit value
@@ -92,10 +93,12 @@ class FloatEdit(EmacsEdit):
         >>> FloatEdit("", 42)
         <FloatEdit selectable flow widget '42' edit_pos=2>
         """
-        if default is not None: val = str(default)
-        else: val = ""
-        self.has_focus=False
-        self.allow_nan=allow_nan
+        if default is not None:
+            val = str(default)
+        else:
+            val = ""
+        self.has_focus = False
+        self.allow_nan = allow_nan
         self.__super.__init__(caption,val)
         self.allow_none = allow_none
 
@@ -132,26 +135,26 @@ class FloatEdit(EmacsEdit):
         """
         Called when the widget loses focus
         """
-        newtext=self.edit_text
+        newtext = self.edit_text
 
         # This function relies on valid_char() to do the heavy lifting.  The
         # code below performs cleanup on partial entries.
 
         # Nuke partial exponent
-        newtext=re.sub(r'[eE][\+\-]?$', '', newtext)
+        newtext = re.sub(r'[eE][\+\-]?$', '', newtext)
 
         # If the 'e' is missing, put it back
-        newtext=re.sub(r'(\d+)([\+\-])', r'\1e\2', newtext)
+        newtext = re.sub(r'(\d+)([\+\-])', r'\1e\2', newtext)
 
         # assume n* is "nan"
-        newtext=re.sub(r'^[Nn].*$', 'nan', newtext)
+        newtext = re.sub(r'^[Nn].*$', 'nan', newtext)
         # assume i* is "inf"
-        newtext=re.sub(r'^([\+\-]?)[Ii].*$', r'\1inf', newtext)
+        newtext = re.sub(r'^([\+\-]?)[Ii].*$', r'\1inf', newtext)
         # nuke "finity" or "an"
-        newtext=re.sub(r'^[afty].*', '', newtext)
+        newtext = re.sub(r'^[afty].*', '', newtext)
 
-        if newtext=="":
-            newtext="0"
+        if newtext == "":
+            newtext = "0"
 
         # inlining function snarfed from http://bugs.python.org/msg75745
         def isNaN(x):
@@ -160,10 +163,10 @@ class FloatEdit(EmacsEdit):
         if not self.allow_nan and (isNaN(float(newtext)) or
                                    float(newtext)==float('-inf') or
                                    float(newtext)==float('inf')):
-            newtext="0"
+            newtext = "0"
 
-        newtext=str(float(newtext))
-        newtext=re.sub(r'\.0$', '', newtext)
+        newtext = str(float(newtext))
+        newtext = re.sub(r'\.0$', '', newtext)
 
         self.set_edit_text(newtext)
 
@@ -171,9 +174,9 @@ class FloatEdit(EmacsEdit):
     # to FloatEdit
     def render(self,(maxcol,), focus=False):
         if self.has_focus and not focus:
-            self.has_focus=False
+            self.has_focus = False
             self.on_blur()
-        self.has_focus=focus
+        self.has_focus = focus
 
         return self.__super.render((maxcol,), focus=focus)
 
@@ -206,7 +209,7 @@ class DateEdit(EmacsEdit):
         if not self.valid_charkey(ch):
             return False
 
-        future_result, future_pos=self.insert_text_result(ch)
+        future_result, future_pos = self.insert_text_result(ch)
 
         if len(future_result) > 8:
             return False
@@ -222,36 +225,20 @@ class DateEdit(EmacsEdit):
 
         return False
 
-    def __init__(self,caption=u"",default=None, mask=u"YYYY-mm-dd"):
+    def __init__(self, caption=u"", default=None, mask=u"YYYY-mm-dd"):
         """
         caption -- caption markup
         default -- default edit value
         """
         self._date_mask = mask
 
-        if default is not None: val = u"%04d%02d%02d" % (default.year, default.month, default.day)
-        else: val = u""
+        if default is not None:
+            val = u"%04d%02d%02d" % (default.year, default.month, default.day)
+        else:
+            val = u""
 
-        self.has_focus=False
+        self.has_focus = False
         self.__super.__init__(caption,val)
-
-    def keypress(self, size, key):
-        """
-        Handle editing keystrokes.  Remove leading zeros.
-
-        >>> e, size = IntEdit("", 5002), (10,)
-        >>> e.keypress(size, 'home')
-        >>> e.keypress(size, 'delete')
-        >>> e.edit_text
-        '002'
-        >>> e.keypress(size, 'end')
-        >>> e.edit_text
-        '2'
-        """
-        (maxcol,) = size
-        unhandled = EmacsEdit.keypress(self,(maxcol,),key)
-
-        return unhandled
 
     def value(self):
         """
@@ -268,8 +255,7 @@ class DateEdit(EmacsEdit):
         """
         Called when the widget loses focus
         """
-        newtext=self.edit_text
-
+        newtext = self.edit_text
         self.set_edit_text(newtext)
 
     def get_text(self):
@@ -315,9 +301,9 @@ class DateEdit(EmacsEdit):
         (5, 0)
         """
         if self.has_focus and not focus:
-            self.has_focus=False
+            self.has_focus = False
             self.on_blur()
-        self.has_focus=focus
+        self.has_focus = focus
 
         (maxcol,) = size
         self._shift_view_to_cursor = bool(focus)
@@ -334,14 +320,26 @@ class DateEdit(EmacsEdit):
         return canv
 
     def keypress(self, size, key):
+        """
+        Handle editing keystrokes.  Remove leading zeros.
+
+        >>> e, size = IntEdit("", 5002), (10,)
+        >>> e.keypress(size, 'home')
+        >>> e.keypress(size, 'delete')
+        >>> e.edit_text
+        '002'
+        >>> e.keypress(size, 'end')
+        >>> e.edit_text
+        '2'
+        """
         if key == "tab":
             date = datetime.date.today()
-            p = self.edit_pos
-            if p<4:
+            pos = self.edit_pos
+            if pos < 4:
                 self.set_edit_text(u"%04d" % date.year)
-            elif p<6:
+            elif pos < 6:
                 self.set_edit_text(self.edit_text[:4] + u"%02d" % date.month)
-            elif p<8:
+            elif pos < 8:
                 self.set_edit_text(self.edit_text[:6] + u"%02d" % date.day)
             self.set_edit_pos(len(self.edit_text))
         else:
@@ -350,11 +348,11 @@ class DateEdit(EmacsEdit):
 class EmacsIntEdit(EmacsEdit):
     """Edit widget for integer values"""
 
-    def valid_char(self, ch):
+    def valid_char(self, character):
         """
         Return true for decimal digits.
         """
-        return len(ch)==1 and ch in "0123456789"
+        return len(character)==1 and character in "0123456789"
 
     def __init__(self,caption="",default=None, allow_none = False):
         """
@@ -364,8 +362,10 @@ class EmacsIntEdit(EmacsEdit):
         >>> IntEdit(u"", 42)
         <IntEdit selectable flow widget '42' edit_pos=2>
         """
-        if default is not None: val = str(default)
-        else: val = ""
+        if default is not None:
+            val = str(default)
+        else:
+            val = ""
         self.__super.__init__(caption,val)
         self.allow_none = allow_none
 
@@ -383,7 +383,7 @@ class EmacsIntEdit(EmacsEdit):
         2
         """
         (maxcol,) = size
-        unhandled = EmacsEdit.keypress(self,(maxcol,),key)
+        unhandled = EmacsEdit.keypress(self, (maxcol,), key)
 
         if not unhandled:
         # trim leading zeros

@@ -43,6 +43,7 @@ class SearchBrowser(Browser):
     def do_search(self, widget = None):
         for w in self._save:
             w.save()
+
         self.app.switch_screen(self)
 
 class Actions(app.UIScreen):

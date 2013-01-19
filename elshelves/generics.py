@@ -74,6 +74,7 @@ class GenericInterface(app.UIScreen):
             elif w == False:
                 return key
             else:
+                self.focus = id
                 self.app.switch_screen_with_return(w)
                 return True
 
