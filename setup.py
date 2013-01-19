@@ -10,7 +10,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name = "elShelves",
+    name = "elshelves",
     version = __version__,
     author = "Martin Sivak",
     author_email = "mars@montik.net",
@@ -19,6 +19,9 @@ setup(
     keywords = "electronics parts database tracking project",
     url = "http://github.com/MarSik/elshelves",
     packages=['elshelves'],
+    package_data={
+        "": ["*.sql"]
+    },
     long_description=read('README'),
     classifiers=[
         "Environment :: Console :: Curses",
