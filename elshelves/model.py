@@ -326,6 +326,9 @@ class Assignment(Storm):
     item = Reference(item_id, Item.id)
     count = Int()
 
+    def __unicode__(self):
+        return u"%s - %s" % (self.item.project.name, self.item.id)
+
     @property
     def count_assigned(self):
         assigned = self.parts.find().sum(Part.count)

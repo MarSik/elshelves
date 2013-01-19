@@ -3,7 +3,7 @@
 import app
 import model
 import urwid
-from app import Edit, IntEdit, Text, CheckBox
+from app import Edit, IntEdit, Text, FloatEdit, DateEdit, CheckBox
 from generics import GenericBrowser, GenericEditor
 
 class HistoryBrowser(GenericBrowser):
@@ -132,7 +132,59 @@ class Browser(GenericBrowser):
     EDITOR = PartEditor
 
     def select(self, widget, id):
-        return PartEditor(self.app, self.store, item = widget._data, caller = self)
+        return self.EDITOR(self.app, self.store,
+                           item = widget._data, caller = self)
+
+class RawPartEditor(GenericEditor):
+    MODEL = model.Part
+    FIELDS = [
+        (_(u"Name: "), "part_type.name", Edit, {}, u""),
+        (_(u"Manufacturer: "), "part_type.manufacturer", Edit, {}, u""),
+        (_(u"Price: "), "price", FloatEdit, {}, u""),
+        (_(u"VAT: "), "vat", FloatEdit, {}, u""),
+        (_(u"Date: "), "date", DateEdit, {}, None),
+        (_(u"Assigned: "), "assignment", Text, {}, u""),
+        (_(u"Soldered: "), "soldered", CheckBox, {}, False),
+        (_(u"Summary: "), "part_type.summary", Edit, {}, u""),
+        (_(u"Pins: "), "part_type.footprint.pins", IntEdit, {}, u""),
+        (_(u"Holes: "), "part_type.footprint.holes", IntEdit, {}, u""),
+        (_(u"Footprint: "), "part_type.footprint.name", Text, {}, u""),
+        (_(u"Datasheet: "), "part_type.datasheet", Edit, {}, u""),
+        (_(u"Description: "), "part_type.description", Edit, {"multiline": True}, u""),
+        ]
+
+class RawPartBrowser(Browser):
+    MODEL = model.Part
+    EDITOR = RawPartEditor
+    FIELDS = [
+        (_(u"name"), "weight", 2, "part_type.name"),
+        (_(u"footp."), "fixed", 6, "part_type.footprint.name"),
+        (_(u"date"), "fixed", 10, "date"),
+        (_(u"source"), "weight", 1, "source.name"),
+        (_(u"price"), "fixed", 10, "price"),
+        (_(u"vat"), "fixed", 4, "vat"),
+        (_(u"cnt"), "fixed", 5, "count"),
+        (_(u"asn"), "fixed", 3, "assigned"),
+        (_(u"sld"), "fixed", 3, "soldered")
+        ]
+
+    def __init__(self, a, store, unusable = False, assigned = True):
+        GenericBrowser.__init__(self, a, store)
+        self._unusable = unusable
+        self._assigned = assigned
+
+    @property
+    def conditions(self):
+        conds = [model.Or(self.MODEL.usable,
+                          self.MODEL.usable != self._unusable)]
+        if not self._assigned:
+            conds.append(self.MODEL.assignment == None)
+        return conds
+
+    @property
+    def title(self):
+        s = _("Parts - raw list")
+        return s
 
 class FootprintEditor(GenericEditor):
     MODEL = model.Footprint
