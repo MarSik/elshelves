@@ -156,7 +156,7 @@ class PartSelector(app.UIScreen):
             ("fixed", 10, urwid.Text(_(u"summary"))),
             self._c(urwid.Text(p.summary)),
             ("fixed", 10, urwid.Text(_(u"pins"))),
-            ("fixed", 10, self._c(urwid.Text(unicode(p.pins))))
+            ("fixed", 10, self._c(urwid.Text(unicode(p.footprint.pins))))
             ], 3)
         line3 = urwid.Columns([
             ("fixed", 10, urwid.Text(_(u"footprint"))),
