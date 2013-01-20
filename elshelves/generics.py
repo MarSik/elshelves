@@ -168,7 +168,7 @@ class GenericBrowser(GenericInterface):
         self.search = search
 
     def header(self, args = None):
-        w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 3)
+        w = urwid.Columns([(f[1], f[2], urwid.Text(f[0])) for f in self.FIELDS], 2)
         return [w]
 
     def _entry(self, s):
