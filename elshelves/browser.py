@@ -137,6 +137,18 @@ class Browser(GenericBrowser):
         ]
     EDITOR = PartEditor
 
+    def __init__(self, a, store, search = None, footprint = None):
+        GenericBrowser.__init__(self, a, store, search)
+        self._footprint = footprint
+
+    @property
+    def conditions(self):
+        conds = GenericBrowser.conditions.fget(self)
+        if self._footprint:
+            conds.append(self.MODEL.footprint == self._footprint)
+
+        return conds
+
     def select(self, widget, id):
         return self.EDITOR(self.app, self.store,
                            item = widget._data, caller = self)
