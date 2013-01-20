@@ -253,7 +253,10 @@ class GenericBrowser(GenericInterface):
 
         if self.search:
             for term in self.search.split():
-                find_args.append(model.Or([getattr(self.MODEL, f).like(u"%%%s%%" % term, "$", False) for f in self.SEARCH_FIELDS]))
+                find_args.append(model.Or([
+                    getattr(self.MODEL, f).like(u"%%%s%%" % term, "$", False)
+                    for f in self.SEARCH_FIELDS
+                    ]))
 
         return find_args
 
