@@ -161,6 +161,7 @@ class RawPartEditor(GenericEditor):
         (_(u"Price: "), "price", FloatEdit, {}, u""),
         (_(u"VAT: "), "vat", FloatEdit, {}, u""),
         (_(u"Date: "), "date", DateEdit, {}, None),
+        (_(u"Source: "), "source.name", Text, {}, None),
         (_(u"Assigned: "), "assignment", Text, {}, u""),
         (_(u"Soldered: "), "soldered", CheckBox, {}, False),
         (_(u"Summary: "), "part_type.summary", Edit, {}, u""),
@@ -179,11 +180,11 @@ class RawPartBrowser(Browser):
     MODEL = model.Part
     EDITOR = RawPartEditor
     FIELDS = [
-        (_(u"name"), "weight", 2, "part_type.name"),
-        (_(u"footp."), "fixed", 6, "part_type.footprint.name"),
+        (_(u"name"), "weight", 1, "part_type.name"),
+        (_(u"footpr."), "fixed", 8, "part_type.footprint.name"),
         (_(u"date"), "fixed", 10, "date"),
-        (_(u"source"), "weight", 1, "source.name"),
-        (_(u"price"), "fixed", 10, "price"),
+        (_(u"source"), "fixed", 6, "source.shortname"),
+        (_(u"price"), "fixed", 6, "price"),
         (_(u"vat"), "fixed", 4, "vat"),
         (_(u"cnt"), "fixed", 5, "count"),
         (_(u"asn"), "fixed", 3, "assigned"),
