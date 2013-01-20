@@ -9,6 +9,27 @@ command_map["ctrl e"] = "cursor max right"
 class EmacsEdit(urwid.Edit):
     signals = ["enter"] + urwid.Edit.signals
 
+    def __init__(self, *args, **kwargs):
+
+        if "maxsize" in kwargs:
+            self._maxsize = kwargs["maxsize"]
+            del kwargs["maxsize"]
+        else:
+            self._maxsize = None
+
+        urwid.Edit.__init__(self, *args, **kwargs)
+
+    # note, this should probably be renamed "valid_result()", and the base
+    # class should be modified to call it by its new name.  That would make
+    # it so that "valid_charkey()" could be named "valid_char()".  This
+    # function is currently named the way it is so that this class will run
+    # on an unmodified release of urwid.
+    def valid_char(self, ch):
+        if self._maxsize and len(self.edit_text) >= self._maxsize:
+            return False
+
+        return urwid.Edit.valid_char(self, ch)
+
     def keypress(self, size, key):
         if key == "ctrl k":
             pos = self.edit_pos
