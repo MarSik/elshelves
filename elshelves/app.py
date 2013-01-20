@@ -214,10 +214,6 @@ class App(object):
             return True
 
     @property
-    def store(self):
-        return self._store
-
-    @property
     def frame(self):
         return self._frame
 
