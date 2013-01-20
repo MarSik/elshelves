@@ -24,7 +24,8 @@ class SearchBrowser(Browser):
         urwid.connect_signal(self.search_field, "enter", self.do_search)
 
     def header(self, args = None):
-        return [urwid.AttrWrap(self.search_field.reg(self._save), "edit", "edit_f"), urwid.Divider(" ")] + Browser.header(self)
+        return [urwid.AttrWrap(self.search_field.reg(self._save), "edit", "edit_f"),
+                urwid.Divider(" ")] + Browser.header(self)
 
     @property
     def conditions(self):
@@ -60,10 +61,14 @@ class Actions(app.UIScreen):
         content = [
             Button(_(u"Add parts"), self._switch_screen, SourceSelector),
             Button(_(u"Use parts"), self._switch_screen, ProjectSelector),
-            Button(_(u"Browse parts"), self._switch_screen, Browser),
-            Button(_(u"Browse footprints"), self._switch_screen, FootprintBrowser),
-            Button(_(u"Browse raw"), self._switch_screen, RawPartBrowser)
+            Button(_(u"Browse parts"), self._switch_screen, Browser)
             ]
+
+        admin_content = [
+            Button(_(u"Footprints"), self._switch_screen, FootprintBrowser),
+            Button(_(u"Raw parts"), self._switch_screen, RawPartBrowser)
+            ]
+
 
         self.body = urwid.Filler(urwid.Pile([
             urwid.GridFlow(content, 16, 3, 1, "left"),
@@ -71,7 +76,9 @@ class Actions(app.UIScreen):
             urwid.Columns([
                 ("fixed", 13, urwid.Text(_(u"Search parts:"))),
                 urwid.AttrWrap(self.search_field, "edit", "edit_f")
-                ], 1)
+                ], 1),
+            urwid.Divider(u" "),
+            urwid.GridFlow(admin_content, 16, 3, 1, "left")
             ]))
 
         return urwid.Padding(self.body, width = 54, align = "center")
