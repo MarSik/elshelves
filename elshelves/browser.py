@@ -171,6 +171,10 @@ class RawPartEditor(GenericEditor):
         (_(u"Description: "), "part_type.description", Edit, {"multiline": True}, u""),
         ]
 
+    def pre_commit_hook(self, item):
+        # update records in search term table
+        model.Term.register(item.part_type)
+
 class RawPartBrowser(Browser):
     MODEL = model.Part
     EDITOR = RawPartEditor
