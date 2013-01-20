@@ -208,6 +208,7 @@ class GenericBrowser(GenericInterface):
             try:
                 col = int(key) - 1
                 f = self.FIELDS[col][3]
+                self.focus = None
                 self.app.switch_screen(self, f)
                 return True
             except (TypeError, ValueError, KeyError, IndexError):
