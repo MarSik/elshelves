@@ -103,6 +103,7 @@ class SourceEditor(GenericEditor):
     MODEL = model.Source
     FIELDS = [
         (_(u"Name: "), "name", Edit, {}, u""),
+        (_(u"Shortname: "), "shortname", Edit, {"maxsize": 6}, u""),
         (_(u"Homepage: "), "home", Edit, {}, u""),
         (_(u"Summary: "), "summary", Edit, {}, u""),
         (_(u"Vat: "), "vat", FloatEdit, {"allow_none": True}, u""),
@@ -113,6 +114,7 @@ class SourceEditor(GenericEditor):
         if item is None:
             item = model.Source(
                 name=u"",
+                shortname=u"",
                 summary=u"",
                 description=u"",
                 home=u"http://",
@@ -125,6 +127,12 @@ class SourceEditor(GenericEditor):
 class SourceSelector(GenericSelector):
     MODEL = model.Source
     EDITOR = SourceEditor
+
+    FIELDS = [
+        (_(u"id"), "fixed", 6, "shortname"),
+        (_(u"name"), "weight", 1, "name"),
+        (_(u"summary"), "weight", 3, "summary")
+        ]
 
     def __init__(self, a, store):
         GenericSelector.__init__(self, a, store)

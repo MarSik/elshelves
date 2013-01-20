@@ -6,11 +6,12 @@ CREATE TABLE meta (
        changed timestamp default CURRENT_TIMESTAMP
 );
 
-INSERT INTO meta (key, value) VALUES ("version", "0.1.0");
+INSERT INTO meta (key, value) VALUES ("version", "0.1.1");
 
 CREATE TABLE sources (
        id integer PRIMARY KEY autoincrement,
        name varchar not null check (length(name)),
+       shortname varchar not null check (length(shortname) <= 6 and length(shortname) > 0),
        summary varchar,
        description varchar,
        home varchar,

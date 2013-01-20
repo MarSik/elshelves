@@ -54,6 +54,7 @@ class Source(Storm):
 
     id = Int(primary=True)
     name = Unicode()
+    shortname = Unicode()
     summary = Unicode()
     description = Unicode()
 
@@ -64,17 +65,19 @@ class Source(Storm):
     prices = Unicode() # reference to somethign which will be able to retrieve prices
     customs = Bool() # is the shipment going through customs? (VAT?)
 
-    def __init__(self, name, summary, description, home, url):
+    def __init__(self, name, shortname, summary, description, home, url):
         self.name = name
+        self.shortname = shortname
         self.summary = summary
         self.description = description
         self.home = home
         self.url = url
 
     def __str__(self):
-        return "<Source id:%d name:%s home:%s" % (self.id,
-                                                  self.name,
-                                                  self.home)
+        return "<Source %s id:%d name:%s home:%s" % (self.shortname,
+                                                     self.id,
+                                                     self.name,
+                                                     self.home)
 
 class PartSource(Storm):
     """Model for many to many relationship between Source and PartType"""
