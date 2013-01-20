@@ -10,9 +10,9 @@ class HistoryBrowser(GenericBrowser):
     MODEL_ARGS = []
     FIELDS = [
         (_(u"time"), "fixed", 20, "time"),
-        (_(u"event"), "fixed", 2, "event"),
+        (_(u"event"), "fixed", 5, "event"),
         (_(u"location"), "fixed", 10, "location"),
-        (_(u"description"), "weight", 2, "description")
+        (_(u"description"), "weight", 1, "description")
         ]
     SORT = False
 
@@ -91,8 +91,8 @@ class PartEditor(GenericEditor):
         (_(u"Name: "), "name", Edit, {}, u""),
         (_(u"Manufacturer: "), "manufacturer", Edit, {}, u""),
         (_(u"Summary: "), "summary", Edit, {}, u""),
-        (_(u"Pins: "), "footprint.pins", Text, {}, u""),
-        (_(u"Holes: "), "footprint.holes", Text, {}, u""),
+        (_(u"Pins: "), "footprint.pins", IntEdit, {}, u""),
+        (_(u"Holes: "), "footprint.holes", IntEdit, {}, u""),
         (_(u"Footprint: "), "footprint.name", Text, {}, u""),
         (_(u"Datasheet: "), "datasheet", Edit, {}, u""),
         (_(u"Description: "), "description", Edit, {"multiline": True}, u""),
@@ -171,6 +171,28 @@ class RawPartEditor(GenericEditor):
         (_(u"Datasheet: "), "part_type.datasheet", Edit, {}, u""),
         (_(u"Description: "), "part_type.description", Edit, {"multiline": True}, u""),
         ]
+
+    DETAIL_FIELDS = HistoryBrowser.FIELDS
+
+    def __init__(self, a, store, item = None, caller = None):
+        GenericEditor.__init__(self, a, store, item, caller)
+        self._browser = HistoryBrowser(a, store, history = item.history)
+
+    def details(self, args = None):
+        def _decorate_from(part_browser, o):
+            o = part_browser._entry(o)
+            o._from = part_browser
+            return o
+
+        return [urwid.Divider(u" ")] + \
+               self._browser.header() + \
+               self._browser.rows(decorator = _decorate_from)
+
+    def select(self, widget, id):
+        if hasattr(widget, "_from"):
+            return widget._from.select(widget, id)
+        else:
+            return False
 
     def pre_commit_hook(self, item):
         # update records in search term table
