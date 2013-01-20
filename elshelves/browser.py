@@ -219,7 +219,30 @@ class FootprintEditor(GenericEditor):
         (_(u"description"), "description", Edit, {"multiline": True}, u"")
         ]
 
-class FootprintBrowser(GenericBrowser):
+    DETAIL_FIELDS = Browser.FIELDS
+
+    def __init__(self, a, store, item = None, caller = None):
+        GenericEditor.__init__(self, a, store, item, caller)
+        self._browser = Browser(a, store, footprint = item)
+
+    def details(self, args = None):
+        def _decorate_from(part_browser, o):
+            o = part_browser._entry(o)
+            o._from = part_browser
+            return o
+
+        return [urwid.Divider(u" ")] + \
+               self._browser.header() + \
+               self._browser.rows(decorator = _decorate_from)
+
+    def select(self, widget, id):
+        if hasattr(widget, "_from"):
+            return widget._from.select(widget, id)
+        else:
+            return False
+
+
+class FootprintBrowser(Browser):
     MODEL = model.Footprint
     EDITOR = FootprintEditor
     FIELDS = [
@@ -240,10 +263,6 @@ class FootprintBrowser(GenericBrowser):
         if self._part_type:
             conds.append(model.PartType.footprint == self)
         return conds
-
-    def select(self, widget, id):
-        return HistoryBrowser(self.app, self.store,
-                              history = widget._data.history)
 
     @property
     def title(self):
