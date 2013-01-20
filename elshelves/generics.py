@@ -110,15 +110,19 @@ class GenericEditor(GenericInterface):
         maxlen = max([len(f[0]) for f in self.FIELDS if not "multiline" in f[3]])
 
         for title, attr, edit, args, default in self.FIELDS:
+            val = self._val(self._item, attr)
+            if val is None:
+                val = default
+
             if "multiline" in args:
                 listbox_content.extend([
                     urwid.Text(title),
-                    _e(edit(u"", self._val(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
+                    _e(edit(u"", val, **args).bind(self._item, attr).reg(self._save))
                     ])
             else:
                 listbox_content.append(urwid.Columns([
                     ("fixed", maxlen, urwid.Text(title)),
-                    _e(edit(u"", self._val(self._item, attr) or default, **args).bind(self._item, attr).reg(self._save))
+                    _e(edit(u"", val, **args).bind(self._item, attr).reg(self._save))
                     ], 3))
 
         listbox_content += [

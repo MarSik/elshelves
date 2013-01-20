@@ -321,24 +321,36 @@ def reg(self, save_registry):
     save_registry.add(self)
     return self
 
+def setextattr(obj, attr, val):
+    """Allow saving to objects referenced from
+       obj by attr.
+
+       Standard setattr does not allow
+         setattr(obj, "arg.arg2.arg3", value)
+    """
+    attrs = attr.split(".")
+    for attr in attrs[:-1]:
+        obj = getattr(obj, attr)
+    setattr(obj, attrs[-1], val)
+
 def save(self):
     """Save the value to the binded data object."""
     assert hasattr(self, "_bind") and self._bind
     (obj, attr) = self._bind
     assert type(self.edit_text) == unicode
-    setattr(obj, attr, self.edit_text)
+    setextattr(obj, attr, self.edit_text)
 
 def valuesave(self):
     """Save the value to the binded data object."""
     assert hasattr(self, "_bind") and self._bind
     (obj, attr) = self._bind
-    setattr(obj, attr, self.value())
+    setextattr(obj, attr, self.value())
 
 def checksave(self):
     """Save the value to the binded data object."""
     assert hasattr(self, "_bind") and self._bind
     (obj, attr) = self._bind
-    setattr(obj, attr, self.get_state())
+    setextattr(obj, attr, self.get_state())
 
 
 urwid.Edit.bind = bind
