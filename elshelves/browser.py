@@ -50,7 +50,7 @@ class PartBrowser(GenericBrowser):
         self._assignment = assignment
         self._part_type = part_type
         self._unusable = unusable
-        self._assigned = False
+        self._assigned = assigned
 
     @property
     def conditions(self):
