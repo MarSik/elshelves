@@ -31,6 +31,8 @@ class GenericInterface(app.UIScreen):
     def _val(self, s, name):
         for p in name.split("."):
             s = getattr(s, p)
+            if s is None:
+                break
         return s
 
     def select(self, widget, id):
